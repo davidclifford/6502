@@ -1,0 +1,118 @@
+%SIGNAL
+PIN   1 =  A0 
+PIN   2 =  A1 
+PIN   3 =  A2 
+PIN   4 =  A3 
+PIN   5 =  A4 
+PIN   6 =  A5 
+PIN   7 =  A6 
+PIN   8 =  A7 
+PIN   9 =  A8 
+PIN  10 =  A9 
+PIN  11 =  A10 
+PIN  13 =  A11 
+PIN  16 =  BANKED 
+PIN  14 =  COPRO 
+PIN  17 =  IO 
+PIN  15 =  RAM 
+PIN  18 =  ROM 
+%END
+
+%FIELD
+FIELD Address = A11,A10,A9,A8,A7,A6,A5,A4,A3,A2,A1,A0
+%END
+
+%EQUATION
+BANKED =>
+    !A10 & A11
+
+COPRO =>
+    !A3 & !A4 & !A5 & !A6 & !A7 & !A8 & !A9 & !A10 & !A11
+
+IO =>
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & !A8 & !A9 & A10 & A11
+
+RAM =>
+    A11
+  # !A3 & !A4 & !A5 & !A6 & !A7 & !A8 & !A9 & !A10
+
+ROM =>
+    A4 & !A6 & !A7 & !A8 & !A9 & A10 & A11
+  # !A4 & A5 & !A7 & !A8 & !A9 & A10 & A11
+  # !A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11
+  # A4 & A5 & A6 & !A8 & !A9 & A10 & A11
+  # A5 & !A8 & A9 & A10 & A11
+  # !A6 & A7 & !A8 & !A9 & A10 & A11
+  # !A5 & A6 & !A8 & A10 & A11
+  # !A4 & A5 & A6 & A7 & !A9 & A10 & A11
+  # !A5 & !A6 & !A8 & A9 & A10 & A11
+  # !A7 & A8 & A10 & A11
+  # A4 & A5 & A6 & A7 & A8 & A10 & A11
+  # A5 & !A6 & A7 & A8 & A10 & A11
+  # !A5 & A7 & A8 & A10 & A11
+
+banked =>
+    !A10 & A11
+
+copro =>
+    !A3 & !A4 & !A5 & !A6 & !A7 & !A8 & !A9 & !A10 & !A11
+
+io =>
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & !A8 & !A9 & A10 & A11
+
+ram =>
+    A3 & !A5 & !A6 & !A7 & !A8 & !A9 & !A10 & !A11
+  # !A3 & A4 & !A6 & !A7 & !A8 & !A9 & !A10 & !A11
+  # !A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & !A11
+  # A3 & A4 & A5 & !A7 & !A8 & !A9 & !A10 & !A11
+  # A4 & A5 & A6 & A7 & !A9 & A10 & !A11
+  # !A5 & A6 & !A8 & !A9 & !A11
+  # !A4 & A5 & !A7 & !A8 & !A9 & !A10 & !A11
+  # !A3 & A4 & A5 & A6 & !A8 & !A9 & !A10 & !A11
+  # A5 & !A7 & !A8 & !A9 & A10 & !A11
+  # !A5 & !A6 & A7 & !A8 & !A9 & !A10 & !A11
+  # !A5 & !A6 & !A8 & !A9 & A10 & !A11
+  # A5 & !A6 & A7 & !A8 & !A9 & !A11
+  # A3 & A4 & A5 & A6 & A7 & A8 & A9 & !A11
+  # !A4 & A5 & A6 & !A7 & !A8 & A9 & !A11
+  # !A4 & A5 & !A6 & !A8 & A9 & !A11
+  # A3 & A4 & A5 & A6 & A7 & !A9 & !A10 & !A11
+  # A4 & !A8 & A9 & !A11
+  # !A5 & A7 & A8 & !A11
+  # !A4 & !A5 & !A8 & A9 & !A11
+  # !A3 & A4 & A5 & A6 & A7 & A8 & !A10 & !A11
+  # !A4 & A5 & A6 & A7 & !A11
+  # !A7 & A8 & !A11
+  # A5 & !A6 & A7 & A8 & !A11
+
+rom =>
+    A4 & !A6 & !A7 & !A8 & !A9 & A10 & A11
+  # !A4 & A5 & !A7 & !A8 & !A9 & A10 & A11
+  # !A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11
+  # A4 & A5 & A6 & !A8 & !A9 & A10 & A11
+  # A5 & !A8 & A9 & A10 & A11
+  # !A6 & A7 & !A8 & !A9 & A10 & A11
+  # !A5 & A6 & !A8 & A10 & A11
+  # !A4 & A5 & A6 & A7 & !A9 & A10 & A11
+  # !A5 & !A6 & !A8 & A9 & A10 & A11
+  # !A7 & A8 & A10 & A11
+  # A4 & A5 & A6 & A7 & A8 & A10 & A11
+  # A5 & !A6 & A7 & A8 & A10 & A11
+  # !A5 & A7 & A8 & A10 & A11
+
+BANKED.oe  =>
+    1 
+
+COPRO.oe  =>
+    1 
+
+IO.oe  =>
+    1 
+
+RAM.oe  =>
+    1 
+
+ROM.oe  =>
+    1 
+
+%END

@@ -1,0 +1,38 @@
+Name     Memory Map ;
+PartNo   00 ;
+Date     25/02/2024 ;
+Revision 01 ;
+Designer David Clifford ;
+Company  David Clifford ;
+Assembly None ;
+Location  ;
+Device   g22v10 ;
+
+
+/*
+6502 Memory Map
+*/
+
+/* *************** INPUT PINS *********************/
+PIN [1..11,13]  = [A0..A11];
+/* *************** OUTPUT PINS *********************/
+PIN   14     = COPRO;
+PIN   15     = RAM;
+PIN   16     = BANKED;
+PIN   17     = IO;
+PIN   18     = ROM;
+
+FIELD Address = [A11..0];
+
+copro  = Address:[000..007];
+ram    = Address:[008..7FF];
+banked = Address:[800..BFF];
+io     = Address:[C00];
+rom    = Address:[C10..FFF];
+
+
+COPRO = !copro;
+RAM = !ram # copro;
+BANKED = !banked;
+IO = !io;
+ROM = !rom;
