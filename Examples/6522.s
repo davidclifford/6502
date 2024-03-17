@@ -1,18 +1,18 @@
-IO_STATUS = $7f00
-IO_DATA = $7f01
-DDR_CTRL = $7f02
-DDR_DATA = $7f03
+IO_DATA = $c000
+IO_STATUS = $c001
+DDR_DATA = $c002
+DDR_CTRL = $c003
 
 RD = %00000001
 WR = %00000010
 TXE = %10000000
 RXE = %01000000
 
-    .org $0000
-    .org $8000
+    .org $c000
+    .org $c100
 
 start:
-
+    cld
 reset:
     ldx #$ff
     txs
@@ -29,7 +29,7 @@ next:
 
 wait:
     lda IO_STATUS
-    sta IO_DATA
+;    sta IO_DATA
     bmi wait
 
     lda message,x  ; Set PORT A to next char
@@ -41,7 +41,7 @@ wait:
     sta IO_STATUS
     jmp next
 
-message: .asciiz "Hello, World!",10
+message: .asciiz "The quick brown fox jumps over the lazy dog!",10
 
     .org $fffc
     .word start

@@ -1,0 +1,188 @@
+F00:0001       IO_DATA = $c000
+F00:0002       IO_STATUS = $c001
+F00:0003       DDR_DATA = $c002
+F00:0004       DDR_CTRL = $c003
+F00:0005       
+F00:0006       RD = %00000001
+F00:0007       WR = %00000010
+F00:0008       ALL_OUT = %11111111
+F00:0009       ALL_IN = %00000000
+F00:0010       STATUS_OUT = %00000011
+F00:0011       
+F00:0012           .org $c000
+F00:0013           .org $c100
+F00:0014       
+F00:0015       start:
+F00:0016           cld
+               S02:FFFFFFFFFFFFC100:  D8
+F00:0017       reset:
+F00:0018           ldx #$ff
+               S02:FFFFFFFFFFFFC101:  A2 FF
+F00:0019           txs
+               S02:FFFFFFFFFFFFC103:  9A
+F00:0020       
+F00:0021           jsr INIT_IO
+               S02:FFFFFFFFFFFFC104:  20 1E C1
+F00:0022       loop:
+F00:0023           ldx #0
+               S02:FFFFFFFFFFFFC107:  A2 00
+F00:0024       next:
+F00:0025           lda os_heading,x
+               S02:FFFFFFFFFFFFC109:  BD 6B C1
+F00:0026           beq input
+               S02:FFFFFFFFFFFFC10C:  F0 07
+F00:0027           jsr CHROUT
+               S02:FFFFFFFFFFFFC10E:  20 2F C1
+F00:0028           inx
+               S02:FFFFFFFFFFFFC111:  E8
+F00:0029           jmp next
+               S02:FFFFFFFFFFFFC112:  4C 09 C1
+F00:0030       input:
+F00:0031           jsr INKEY
+               S02:FFFFFFFFFFFFC115:  20 48 C1
+F00:0032           jsr CHROUT
+               S02:FFFFFFFFFFFFC118:  20 2F C1
+F00:0033           jmp input
+               S02:FFFFFFFFFFFFC11B:  4C 15 C1
+F00:0034       
+F00:0035       ;============================================================
+F00:0036       
+F00:0037       INIT_IO:
+F00:0038           lda #ALL_OUT ; Set all pins on port A to output
+               S02:FFFFFFFFFFFFC11E:  A9 FF
+F00:0039           sta DDR_DATA
+               S02:FFFFFFFFFFFFC120:  8D 02 C0
+F00:0040           lda #STATUS_OUT ; Set lowest 2 pins on port B to output
+               S02:FFFFFFFFFFFFC123:  A9 03
+F00:0041           sta DDR_CTRL
+               S02:FFFFFFFFFFFFC125:  8D 03 C0
+F00:0042           rts
+               S02:FFFFFFFFFFFFC128:  60
+F00:0043       
+F00:0044       WAIT_OUT:
+F00:0045           bit IO_STATUS
+               S02:FFFFFFFFFFFFC129:  2C 01 C0
+F00:0046           bmi WAIT_OUT
+               S02:FFFFFFFFFFFFC12C:  30 FB
+F00:0047           rts
+               S02:FFFFFFFFFFFFC12E:  60
+F00:0048       
+F00:0049       ; Waits if output buffer is full and then prints character in A
+F00:0050       CHROUT:
+F00:0051           bit IO_STATUS
+               S02:FFFFFFFFFFFFC12F:  2C 01 C0
+F00:0052           bmi CHROUT
+               S02:FFFFFFFFFFFFC132:  30 FB
+F00:0053       OUTCHAR:
+F00:0054           sta IO_DATA
+               S02:FFFFFFFFFFFFC134:  8D 00 C0
+F00:0055           lda #WR        ; Write (active low)
+               S02:FFFFFFFFFFFFC137:  A9 02
+F00:0056           sta IO_STATUS
+               S02:FFFFFFFFFFFFC139:  8D 01 C0
+F00:0057           lda #(WR | RD) ; set WR and RD to High
+               S02:FFFFFFFFFFFFC13C:  A9 03
+F00:0058           sta IO_STATUS
+               S02:FFFFFFFFFFFFC13E:  8D 01 C0
+F00:0059           rts
+               S02:FFFFFFFFFFFFC141:  60
+F00:0060       
+F00:0061       WAIT_IN:
+F00:0062           bit IO_STATUS
+               S02:FFFFFFFFFFFFC142:  2C 01 C0
+F00:0063           bvs WAIT_IN
+               S02:FFFFFFFFFFFFC145:  70 FB
+F00:0064           rts
+               S02:FFFFFFFFFFFFC147:  60
+F00:0065       
+F00:0066       ; Wait for key to be pressed and then
+F00:0067       ; Returns ascii value of key in A and stores in variable key_press
+F00:0068       INKEY:
+F00:0069           bit IO_STATUS
+               S02:FFFFFFFFFFFFC148:  2C 01 C0
+F00:0070           bvs INKEY
+               S02:FFFFFFFFFFFFC14B:  70 FB
+F00:0071       INCHAR:
+F00:0072           lda #ALL_IN; Set all pins on port A to input
+               S02:FFFFFFFFFFFFC14D:  A9 00
+F00:0073           sta DDR_DATA
+               S02:FFFFFFFFFFFFC14F:  8D 02 C0
+F00:0074           lda #RD ; Read (active low)
+               S02:FFFFFFFFFFFFC152:  A9 01
+F00:0075           sta IO_STATUS
+               S02:FFFFFFFFFFFFC154:  8D 01 C0
+F00:0076           lda IO_DATA    ; Read data (keypress)
+               S02:FFFFFFFFFFFFC157:  AD 00 C0
+F00:0077           sta key_press  ; Save data
+               S02:FFFFFFFFFFFFC15A:  8D 00 7F
+F00:0078           lda #(WR | RD) ; set WR and RD to High
+               S02:FFFFFFFFFFFFC15D:  A9 03
+F00:0079           sta IO_STATUS
+               S02:FFFFFFFFFFFFC15F:  8D 01 C0
+F00:0080           lda #ALL_OUT ; Set all pins on port A to output
+               S02:FFFFFFFFFFFFC162:  A9 FF
+F00:0081           sta DDR_DATA
+               S02:FFFFFFFFFFFFC164:  8D 02 C0
+F00:0082           lda key_press  ; Restore keypess
+               S02:FFFFFFFFFFFFC167:  AD 00 7F
+F00:0083           rts
+               S02:FFFFFFFFFFFFC16A:  60
+F00:0084       
+F00:0085       ;os_heading: .string 10,"[2J[HDAVROS V1.00 March 2024",10
+F00:0086       os_heading: .string 10,"\e[2J\e[HDAVROS V1.00 March 2024",10
+               S02:FFFFFFFFFFFFC16B:  0A
+               S02:FFFFFFFFFFFFC16C:  5C 65 5B 32 4A 5C 65 5B 48 44 41 56 52 4F 53 20
+               S02:FFFFFFFFFFFFC17C:  56 31 2E 30 30 20 4D 61 72 63 68 20 32 30 32 34
+               S02:FFFFFFFFFFFFC18C:  0A
+F00:0087       
+F00:0088       ;====================================================================
+F00:0089       ; OS Ram area 7F00
+F00:0090       
+F00:0091       key_press=$7F00
+F00:0092       
+F00:0093           .org $fffc
+F00:0094           .word start
+               S03:FFFFFFFFFFFFFFFC:  00 C1
+F00:0095           .word 0
+               S03:FFFFFFFFFFFFFFFE:  00 00
+F00:0096       
+
+
+Sections:
+S01  segc000
+S02  segc100
+S03  segfffc
+
+
+Sources:
+F00  os.s
+
+
+Symbols:
+key_press EXPR(32512=0x7f00) EQU 
+INCHAR EXPR(-16051=0xc14d) UNUSED ABS 
+WAIT_IN EXPR(-16062=0xc142) ABS 
+OUTCHAR EXPR(-16076=0xc134) UNUSED ABS 
+WAIT_OUT EXPR(-16087=0xc129) ABS 
+INKEY EXPR(-16056=0xc148) ABS 
+CHROUT EXPR(-16081=0xc12f) ABS 
+input EXPR(-16107=0xc115) ABS 
+os_heading EXPR(-16021=0xc16b) ABS 
+next EXPR(-16119=0xc109) ABS 
+loop EXPR(-16121=0xc107) UNUSED ABS 
+INIT_IO EXPR(-16098=0xc11e) ABS 
+reset EXPR(-16127=0xc101) UNUSED ABS 
+start EXPR(-16128=0xc100) ABS 
+STATUS_OUT EXPR(3=0x3) EQU 
+ALL_IN EXPR(0=0x0) EQU 
+ALL_OUT EXPR(255=0xff) EQU 
+WR EXPR(2=0x2) EQU 
+RD EXPR(1=0x1) EQU 
+DDR_CTRL EXPR(-16381=0xc003) EQU 
+DDR_DATA EXPR(-16382=0xc002) EQU 
+IO_STATUS EXPR(-16383=0xc001) EQU 
+IO_DATA EXPR(-16384=0xc000) EQU 
+__RPTCNT EXPR(-1=0xffff) INTERNAL 
+__VASM EXPR(0=0x0) INTERNAL 
+
+There have been no errors.
