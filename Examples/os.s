@@ -14,23 +14,50 @@ STATUS_OUT = %00000011
 
 start:
     cld
-reset:
     ldx #$ff
     txs
-
     jsr INIT_IO
-loop:
+os_start:
+print_heading:
     ldx #0
-next:
     lda os_heading,x
-    beq input
+    beq os_input_loop
     jsr CHROUT
     inx
-    jmp next
-input:
+    jmp print_heading
+os_input_loop:
+    lda #10
+    jsr CHROUT
+    lda #'>'
+    jsr CHROUT
+    lda #' '
+    jsr CHROUT
+
+os_input:
     jsr INKEY
     jsr CHROUT
-    jmp input
+choose_command:
+    cmp #' '
+    beq os_input
+    cmp #'A'
+    bcc skip_case
+    cmp #'['
+    bcs skip_case
+    ora #$20
+skip_case:
+    cmp #'x'
+    beq os_start
+    cmp #'c'
+    beq change
+    cmp 'd'
+    beq dump
+    cmp 'r'
+    beq run
+    jmp os_input_loop
+change:
+dump:
+run:
+    jmp os_input_loop
 
 ;============================================================
 
@@ -51,11 +78,13 @@ CHROUT:
     bit IO_STATUS
     bmi CHROUT
 OUTCHAR:
+    pha
     sta IO_DATA
     lda #WR        ; Write (active low)
     sta IO_STATUS
     lda #(WR | RD) ; set WR and RD to High
     sta IO_STATUS
+    pla
     rts
 
 WAIT_IN:
