@@ -14,10 +14,10 @@ IN    = $0200                       ; Input buffer
 
 IO_DATA   = $C000
 IO_STATUS = $C001
-DDR_DATA  = $C002
-DDR_CTRL  = $C003
-RD        = %00000001
-WR        = %00000010
+IO_DDR_DATA  = $C002
+IO_DDR_CTRL  = $C003
+IO_RD        = %00000001
+IO_WR        = %00000010
 
 START:
                 CLD
@@ -26,9 +26,9 @@ START:
 
 RESET:
                 LDA     #$FF                    ;
-                STA     DDR_DATA                ; UART All output (default)
+                STA IO_DDR_DATA                 ; UART All output (default)
                 LDA     #$03                    ;
-                STA     DDR_CTRL                ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
+                STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
                 LDA     #$1B                    ; Begin with escape.
 
 NOTCR:
@@ -191,14 +191,14 @@ ECHO:
                 BIT     IO_STATUS               ; Wait for output to be ready
                 BMI     ECHO
                 PHA                             ; Save A.
-                LDA     #(WR|RD)                ; Set WR and RD to High
+                LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
                 STA     IO_STATUS
                 PLA
                 STA     IO_DATA                 ; Output Character to UART
                 PHA
-                LDA     #WR                     ; Write (active low)
+                LDA     #IO_WR                  ; Write (active low)
                 STA     IO_STATUS
-                LDA     #(WR|RD)                ; Set WR and RD to High
+                LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
                 STA     IO_STATUS
                 PLA                             ; Restore A.
                 RTS                             ; Return.
@@ -208,15 +208,15 @@ INPUTKEY:
                 BVS     INPUTKEY
 
                 LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
-                STA     DDR_DATA
-                LDA     #RD                     ; READ PIN FOR UART (ACTIVE LOW)
+                STA IO_DDR_DATA
+                LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
                 STA     IO_STATUS
                 LDA     IO_DATA                 ; READ DATA (KEYPRESS)
                 STA     KEYPRESS                ; SAVE DATA
-                LDA     #(WR|RD)                ; SET WR AND RD TO HIGH
+                LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
                 STA     IO_STATUS
                 LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
-                STA     DDR_DATA
+                STA IO_DDR_DATA
                 LDA     KEYPRESS                ; RESTORE KEYPESS
                 RTS
 

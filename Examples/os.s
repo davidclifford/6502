@@ -1,10 +1,10 @@
 IO_DATA = $c000
 IO_STATUS = $c001
-DDR_DATA = $c002
-DDR_CTRL = $c003
+IO_DDR_DATA = $c002
+IO_DDR_CTRL = $c003
 
-RD = %00000001
-WR = %00000010
+IO_RD = %00000001
+IO_WR = %00000010
 ALL_OUT = %11111111
 ALL_IN = %00000000
 STATUS_OUT = %00000011
@@ -26,38 +26,38 @@ print_heading:
     inx
     bra print_heading
 os_input_loop:
-    lda #'>'            ; output > prompt
+    lda #'>'                        ; output > prompt
     jsr CHROUT
     lda #' '
     jsr CHROUT
 next_input:
-    jsr KEYIN           ; Read key input
-    jsr CHROUT          ; Echo to screen
+    jsr KEYIN                       ; Read key input
+    jsr CHROUT                      ; Echo to screen
     sta cmdchar
     cmp #10
     beq os_input_loop
     cmp #13
-    beq os_input_loop   ; Loop if CR or LF key
+    beq os_input_loop               ; Loop if CR or LF key
 
-    ldx #0              ; Set input buffer to zero
+    ldx #0                          ; Set input buffer to zero
 os_input:
-    jsr KEYIN           ; Read next keypress
-    jsr CHROUT          ; Echo keypress
+    jsr KEYIN                       ; Read next keypress
+    jsr CHROUT                      ; Echo keypress
 
     cmp #' '
-    beq os_input        ; skip spaces
+    beq os_input                    ; skip spaces
     cmp #10
     beq docmd
     cmp #13
-    beq docmd           ; Exit on LF or CR
+    beq docmd                       ; Exit on LF or CR
     sta hexchar,x
     inx
-    cpx #4              ; Ignore rest of line once 4 hex digits input
+    cpx #4                          ; Ignore rest of line once 4 hex digits input
     beq waitnl
     bra os_input
 
 waitnl:
-    jsr KEYIN           ; Wait for CR of LF to be pressed
+    jsr KEYIN                       ; Wait for CR of LF to be pressed
     jsr CHROUT
     cmp #10
     beq cvtaddr
@@ -163,7 +163,7 @@ prhex:
     cmp 10
     bcc digit
     ; A-F
-    adc #54     ; carry is set when we get here so use 54 not 55
+    adc #54                         ; carry is set when we get here so use 54 not 55
     bra outhex
 digit:
     adc #'0'
@@ -192,11 +192,11 @@ hexcvt:
     lda hexchar
     clc
     adc #$1F
-    bmi adj0 ; a-f
+    bmi adj0                        ; a-f
     adc #$20
-    bmi adj0  ; A-F
+    bmi adj0                        ; A-F
     sec
-    sbc #$6F  ; 0-9
+    sbc #$6F                        ; 0-9
     bra nib0
 adj0:
     sec
@@ -212,11 +212,11 @@ nib0:
     lda hexchar+1
     clc
     adc #$1F
-    bmi adj1 ; a-f
+    bmi adj1                        ; a-f
     adc #$20
-    bmi adj1  ; A-F
+    bmi adj1                        ; A-F
     sec
-    sbc #$6F  ; 0-9
+    sbc #$6F                        ; 0-9
     bra nib1
 adj1:
     sec
@@ -230,11 +230,11 @@ nib1:
     lda hexchar+2
     clc
     adc #$1F
-    bmi adj2 ; a-f
+    bmi adj2                        ; a-f
     adc #$20
-    bmi adj2  ; A-F
+    bmi adj2                        ; A-F
     sec
-    sbc #$6F  ; 0-9
+    sbc #$6F                        ; 0-9
     bra nib2
 adj2:
     sec
@@ -250,11 +250,11 @@ nib2:
     lda hexchar+3
     clc
     adc #$1F
-    bmi adj3 ; a-f
+    bmi adj3                        ; a-f
     adc #$20
-    bmi adj3  ; A-F
+    bmi adj3                        ; A-F
     sec
-    sbc #$6F  ; 0-9
+    sbc #$6F                        ; 0-9
     bra nib3
 adj3:
     sec
@@ -271,10 +271,10 @@ bytcvt:
     lda hexchar
     clc
     adc #$1F
-    bmi adj ; a-f
+    bmi adj                         ; a-f
     adc #$20
-    bmi adj  ; A-F
-    sbc #$6F  ; 0-9
+    bmi adj                         ; A-F
+    sbc #$6F                        ; 0-9
     bra nib
 adj:
     sbc #$76
@@ -289,10 +289,10 @@ nib:
     lda hexchar+1
     clc
     adc #$1F
-    bmi adja ; a-f
+    bmi adja                        ; a-f
     adc #$20
-    bmi adja  ; A-F
-    sbc #$6F  ; 0-9
+    bmi adja                        ; A-F
+    sbc #$6F                        ; 0-9
     bra niba
 adja:
     sbc #$76
@@ -305,10 +305,10 @@ niba:
 ;============================================================
 
 INIT_IO:
-    lda #ALL_OUT ; Set all pins on port A to output
-    sta DDR_DATA
-    lda #STATUS_OUT ; Set lowest 2 pins on port B to output
-    sta DDR_CTRL
+    lda #ALL_OUT                    ; Set all pins on port A to output
+    sta IO_DDR_DATA
+    lda #STATUS_OUT                 ; Set lowest 2 pins on port B to output
+    sta IO_DDR_CTRL
     rts
 
 WAIT_OUT:
@@ -322,14 +322,14 @@ CHROUT:
     bmi CHROUT
 OUTCHR:
     pha
-    lda #(WR | RD) ; set WR and RD to High
+    lda #(IO_WR | IO_RD)            ; set WR and RD to High
     sta IO_STATUS
     pla
     sta IO_DATA
     pha
-    lda #WR        ; Write (active low)
+    lda #IO_WR                      ; Write (active low)
     sta IO_STATUS
-    lda #(WR | RD) ; set WR and RD to High
+    lda #(IO_WR | IO_RD)            ; set WR and RD to High
     sta IO_STATUS
     pla
     rts
@@ -345,17 +345,17 @@ KEYIN:
     bit IO_STATUS
     bvs KEYIN
 INKEY:
-    lda #ALL_IN; Set all pins on port A to input
-    sta DDR_DATA
-    lda #RD ; Read (active low)
+    lda #ALL_IN                     ; Set all pins on port A to input
+    sta IO_DDR_DATA
+    lda #IO_RD                      ; Read (active low)
     sta IO_STATUS
-    lda IO_DATA    ; Read data (keypress)
-    sta key_press  ; Save data
-    lda #(WR | RD) ; set WR and RD to High
+    lda IO_DATA                     ; Read data (keypress)
+    sta key_press                   ; Save data
+    lda #(IO_WR | IO_RD)            ; set WR and RD to High
     sta IO_STATUS
-    lda #ALL_OUT ; Set all pins on port A to output
-    sta DDR_DATA
-    lda key_press  ; Restore keypess
+    lda #ALL_OUT                    ; Set all pins on port A to output
+    sta IO_DDR_DATA
+    lda key_press                   ; Restore keypess
     rts
 
 os_heading: .asciiz "[2J[HDAVROS V1.00 March 2024",10,10
@@ -363,14 +363,14 @@ os_usage:   .asciiz "Usage: D dump, C change, R run, ? help, X exit",10,10
 
 ;====================================================================
 ; Zero Page
-addr      = $80   ; 2 byte 16-bit address
+addr      = $80                     ; 2 byte 16-bit address
 
 ; OS Ram area 7F00
 
 key_press = $7F00
-cmdchar   = $7F01   ; Command to execute
-hexchar   = $7F02   ; 4 bytes to store hex chars e.g. 1FE3
-hex       = $7f08   ; Byte converted from 2 hex digits in hexchar & hexchar+1
+cmdchar   = $7F01                   ; Command to execute
+hexchar   = $7F02                   ; 4 bytes to store hex chars e.g. 1FE3
+hex       = $7f08                   ; Byte converted from 2 hex digits in hexchar & hexchar+1
 
     .org $fffc
     .word start
