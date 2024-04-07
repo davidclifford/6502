@@ -8,41 +8,32 @@ WR = %00000010
 TXE = %10000000
 RXE = %01000000
 
-    .org $c000
-    .org $c100
+    .org $1000
 
-start:
-    cld
-reset:
-    ldx #$ff
-    txs
+    LDA     #$FF                    ;
+    STA     DDR_DATA                ; UART All output (default)
+    LDA     #$03                    ;
+    STA     DDR_CTRL                ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
 
-    lda #%11111111 ; Set all pins on port A to output
-    sta DDR_DATA
-    lda #%00000011 ; Set lowest 2 pins on port B to output
-    sta DDR_CTRL
 loop:
     ldx #0
-next:
-    lda #%00000011 ; set WR and RD to High
-    sta IO_STATUS
-
 wait:
-    lda IO_STATUS
-;    sta IO_DATA
-    bmi wait
-
     lda message,x  ; Set PORT A to next char
     beq loop
-    sta IO_DATA
+    jsr ECHO
     inx
+    bra wait
 
-    lda #WR        ; Write (active low)
-    sta IO_STATUS
-    jmp next
+ECHO:
+    BIT     IO_STATUS               ; Wait for output to be ready
+    BMI     ECHO
+    STA     IO_DATA                 ; Output Character to UART
+    LDA     #(WR|RD)                ; Set WR and RD to High
+    STA     IO_STATUS
+    LDA     #WR                     ; Write (active low)
+    STA     IO_STATUS
+    LDA     #(WR|RD)                ; Set WR and RD to High
+    STA     IO_STATUS
+    RTS                             ; Return.
 
 message: .asciiz "The quick brown fox jumps over the lazy dog!",10
-
-    .org $fffc
-    .word start
-    .word 0
