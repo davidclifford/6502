@@ -1,9 +1,11 @@
         .org $1000
 
         JSR     IO_INIT
+        LDA     #10
+        JSR     IO_ECHO
 LOOP:
         JSR     RAND
-        LDA     XSHFT
+        LDA     XSHFT+1
         BMI     BS
         LDA     #'/'
         JSR     IO_ECHO

@@ -1,0 +1,27 @@
+Sections:
+00: "org0001:1000" (1000-1007)
+
+
+Source: ".\Examples\test.s"
+                        	     1: DAVE .macro fred
+                        	     2:     pha
+                        	     3:     pla
+                        	     4:     ldx #\fred
+                        	     5: .endmacro
+                        	     6: 
+                        	     7:     .org $1000
+                        	     8: start:
+00:1000 A901            	     9:     lda #1
+                        	    10:     DAVE 2
+00:1002 48              	     1M     pha
+00:1003 68              	     2M     pla
+00:1004 A202            	     3M     ldx #2
+00:1006 60              	    11:     rts
+                        	    12: 
+
+
+Symbols by name:
+start                            A:1000
+
+Symbols by value:
+1000 start

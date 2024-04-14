@@ -8,9 +8,9 @@ IO_KEY          = $82                           ; ZP Last key pressed
 
 IO_INIT:
                 LDA     #$FF                    ;
-                STA IO_DDR_DATA                 ; UART All output (default)
+                STA     IO_DDR_DATA             ; UART All output (default)
                 LDA     #$03                    ;
-                STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
+                STA     IO_DDR_CTRL             ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
                 RTS
 
 IO_ECHO:
