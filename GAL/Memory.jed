@@ -1,7 +1,7 @@
 
 CUPL(WM)        5.0a  Serial# 60008009
 Device          g22v10  Library DLIB-h-40-1
-Created         Sun Mar 03 16:55:34 2024
+Created         Thu Apr 25 17:16:58 2024
 Name            Memory Map 
 Partno          00 
 Revision        01 
@@ -53,4 +53,4 @@ Location
 *L05792 00000000000000000000000000010101
 *L05824 11010011000000110000001000000000
 *C793E
-*7DE9
+*7DEF

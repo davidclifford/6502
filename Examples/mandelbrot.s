@@ -15,21 +15,19 @@ loopx:
     jsr IO_ECHO
 
     jsr mand_get
-    sta $80
-    bbs3 $80,lighter
-;    and #8
-;    bne lighter
+    sta $90
+    bbs3 $90,lighter
 
     lda #'4'
     jsr IO_ECHO
-    lda $80
+    lda $90
     bra square
 lighter:
     lda #'1'
     jsr IO_ECHO
     lda #'0'
     jsr IO_ECHO
-    lda $80
+    lda $90
     inc
 square:
     and #7
@@ -65,5 +63,5 @@ square:
     jsr IO_ECHO
     jmp $c100
 
-    .include mandel.s
     .include io.s
+    .include mandel.s
