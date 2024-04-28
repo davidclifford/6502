@@ -81,9 +81,9 @@ NEXTITEM:
                 CMP     #$2E                    ; "."?
                 BCC     BLSKIP                  ; Skip delimiter.
                 BEQ     SETBLOCK                ; Set BLOCK XAM mode.
-                CMP     #$3A                    ; ":"?
+                CMP     #':'                    ; ":"?
                 BEQ     SETSTOR                 ; Yes, set STOR mode.
-                CMP     #$52                    ; "R"?
+                CMP     #'R'                    ; "R"?
                 BEQ     RUN                     ; Yes, run user program.
                 STX     L                       ; $00 -> L.
                 STX     H                       ;    and H.
@@ -207,7 +207,7 @@ INPUTKEY:
                 BVS     INPUTKEY
 
                 LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
-                STA IO_DDR_DATA
+                STA     IO_DDR_DATA
                 LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
                 STA     IO_STATUS
                 LDA     IO_DATA                 ; READ DATA (KEYPRESS)
@@ -215,7 +215,7 @@ INPUTKEY:
                 LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
                 STA     IO_STATUS
                 LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
-                STA IO_DDR_DATA
+                STA     IO_DDR_DATA
                 LDA     KEYPRESS                ; RESTORE KEYPESS
                 RTS
 

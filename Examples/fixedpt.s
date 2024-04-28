@@ -3,6 +3,17 @@ FP_B = $FD
 FP_C = $F0
 FP_R = $F2
 
+CP_A = $10
+CP_B = $18
+CP_ML = $00
+CP_MH = $01
+CP_MD = $02
+CP_DV = $03
+CP_S0 = $04
+CP_S1 = $05
+CP_S2 = $06
+CP_S3 = $07
+
 fp_lda_byte:  ;FP_A = A
    sta FP_A+1
    stz FP_A
@@ -292,6 +303,221 @@ negative$:
    lda #0
    sbc FP_C+1
    sta FP_C+1
+return$:
+   ply
+   plx
+   rts
+
+; Optimised version of SQUARE FP_A, only have to check neg at start, no need to neg at end as squares are ALWAYS positve
+fp_square: ; FP_C = FP_A * FP_A; FP_R overflow
+   phx
+   phy
+   ; push original FP_A to stack & copy to FP_B
+   lda FP_A
+   sta FP_B
+   pha
+   lda FP_A+1
+   sta FP_B+1
+   pha
+   bit FP_A+1
+   bpl init_c$
+   lda #0
+   sec
+   sbc FP_A
+   sta FP_A
+   sta FP_B
+   lda #0
+   sbc FP_A+1
+   sta FP_A+1 ; A = |A|
+   sta FP_B+1 ; B = |A|
+init_c$:
+   lda #0
+   sta FP_R
+   sta FP_C
+   sta FP_C+1
+   ldx #16
+loop1$:
+   lsr FP_B+1
+   ror FP_B
+   bcc loop2$
+   tay
+   clc
+   lda FP_A
+   adc FP_R
+   sta FP_R
+   tya
+   adc FP_A+1
+loop2$:
+   ror
+   ror FP_R
+   ror FP_C+1
+   ror FP_C
+   dex
+   bne loop1$
+   sta FP_R+1
+   ldx #8
+loop3$:
+   lsr FP_R+1
+   ror FP_R
+   ror FP_C+1
+   ror FP_C
+   dex
+   bne loop3$
+   ; restore A
+   pla
+   sta FP_A+1
+   pla
+   sta FP_A
+return$:
+   ply
+   plx
+   rts
+
+cp_multiply: ; FP_C = FP_A * FP_B; FP_R overflow
+   phx
+   phy
+   ; push original A and B to stack
+   lda FP_A
+   pha
+   lda FP_A+1
+   pha
+   lda FP_B
+   pha
+   lda FP_B+1
+   pha
+   bit FP_A+1
+   bpl check_sign_b$
+   lda #0
+   sec
+   sbc FP_A
+   sta FP_A
+   lda #0
+   sbc FP_A+1
+   sta FP_A+1 ; A = |A|
+check_sign_b$:
+   bit FP_B+1
+   bpl init_c$
+   lda #0
+   sec
+   sbc FP_B
+   sta FP_B
+   lda #0
+   sbc FP_B+1
+   sta FP_B+1 ; B = |B|
+init_c$:
+; The magic happens here
+   ; Init C ard R
+   lda #0
+   sta FP_C
+   sta FP_C+1
+   sta FP_R
+
+   lda FP_A
+   sta CP_A
+   lda FP_B
+   sta CP_B
+   lda CP_MH
+   sta FP_C
+
+   lda FP_A+1
+   sta CP_A
+   clc
+   lda FP_C
+   adc CP_ML
+   sta FP_C
+   lda FP_C+1
+   adc CP_MH
+   sta FP_C+1
+
+   lda FP_A
+   sta CP_A
+   lda FP_B+1
+   sta CP_B
+   clc
+   lda FP_C
+   adc CP_ML
+   sta FP_C
+   lda FP_C+1
+   adc CP_MH
+   sta FP_C+1
+
+   lda FP_A+1
+   sta CP_A
+   clc
+   lda FP_C+1
+   adc CP_ML
+   sta FP_C+1
+   lda FP_R
+   adc CP_MH
+   sta FP_R
+;
+   ; restore A and B
+   pla
+   sta FP_B+1
+   pla
+   sta FP_B
+   pla
+   sta FP_A+1
+   pla
+   sta FP_A
+   bit FP_B+1
+   bmi check_cancel$
+   bit FP_A+1
+   bmi negative$
+   jmp return$
+check_cancel$:
+   bit FP_A+1
+   bmi return$
+negative$:
+   lda #0
+   sec
+   sbc FP_C
+   sta FP_C
+   lda #0
+   sbc FP_C+1
+   sta FP_C+1
+return$:
+   ply
+   plx
+   rts
+
+; Use co-pro lookup for squares: $10 MSB $18 LSB. result $04,$05,$06,$07 LSB to MSB
+cp_square:
+   phx
+   phy
+   ; push original FP_A to stack & copy to FP_B
+   lda FP_A
+   pha
+   lda FP_A+1
+   pha
+   ; Make A positive
+   bit FP_A+1
+   bpl square_c$
+   lda #0
+   sec
+   sbc FP_A
+   sta FP_A
+   lda #0
+   sbc FP_A+1
+   sta FP_A+1 ; A = |A|
+square_c$:
+
+   lda FP_A
+   sta CP_B
+   lda FP_A+1
+   sta CP_A
+
+   lda CP_S1
+   sta FP_C
+   lda CP_S2
+   sta FP_C+1
+   lda CP_S3
+   sta FP_R
+
+   pla
+   sta FP_A+1
+   pla
+   sta FP_A
 return$:
    ply
    plx
