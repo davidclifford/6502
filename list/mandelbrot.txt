@@ -1,9 +1,9 @@
 Sections:
-00: "org0001:1000" (1000-1468)
+00: "org0001:1000" (1000-147C)
 
 
 Source: ".\Examples\mandelbrot.s"
-                        	     1:     ; Mandelbrot using ascii
+                        	     1:     ; Mandelbrot using Michael Kamprath's algorithm
                         	     2:     .org $1000
                         	     3: 
                         	     4:     ; Start
@@ -83,9 +83,9 @@ Source: "io.s"
                         	    47: 
 
 Source: ".\Examples\mandelbrot.s"
-                        	    30:     .include mandel_copro.s
+                        	    30:     .include mandel.s
 
-Source: "mandel_copro.s"
+Source: "mandel.s"
                         	     1:    .include fixedpt.s
 
 Source: "fixedpt.s"
@@ -541,81 +541,79 @@ Source: "fixedpt.s"
 00:12A0 A5F2            	   450:    lda FP_R
 00:12A2 6501            	   451:    adc CP_MH
 00:12A4 85F2            	   452:    sta FP_R
-                        	   453: ;
-                        	   454:    ; restore A and B
-00:12A6 68              	   455:    pla
-00:12A7 85FE            	   456:    sta FP_B+1
-00:12A9 68              	   457:    pla
-00:12AA 85FD            	   458:    sta FP_B
-00:12AC 68              	   459:    pla
-00:12AD 85FC            	   460:    sta FP_A+1
-00:12AF 68              	   461:    pla
-00:12B0 85FB            	   462:    sta FP_A
-00:12B2 24FE            	   463:    bit FP_B+1
-00:12B4 3007            	   464:    bmi check_cancel$
-00:12B6 24FC            	   465:    bit FP_A+1
-00:12B8 3007            	   466:    bmi negative$
-00:12BA 4CCE12          	   467:    jmp return$
-                        	   468: check_cancel$:
-00:12BD 24FC            	   469:    bit FP_A+1
-00:12BF 300D            	   470:    bmi return$
-                        	   471: negative$:
-00:12C1 A900            	   472:    lda #0
-00:12C3 38              	   473:    sec
-00:12C4 E5F0            	   474:    sbc FP_C
-00:12C6 85F0            	   475:    sta FP_C
-00:12C8 A900            	   476:    lda #0
-00:12CA E5F1            	   477:    sbc FP_C+1
-00:12CC 85F1            	   478:    sta FP_C+1
-                        	   479: return$:
-00:12CE 7A              	   480:    ply
-00:12CF FA              	   481:    plx
-00:12D0 60              	   482:    rts
-                        	   483: 
-                        	   484: ; Use co-pro lookup for squares: $10 MSB $18 LSB. result $04,$05,$06,$07 LSB to MSB
-                        	   485: cp_square:
-00:12D1 DA              	   486:    phx
-00:12D2 5A              	   487:    phy
-                        	   488:    ; push original FP_A to stack & copy to FP_B
-00:12D3 A5FB            	   489:    lda FP_A
-00:12D5 48              	   490:    pha
-00:12D6 A5FC            	   491:    lda FP_A+1
-00:12D8 48              	   492:    pha
-                        	   493:    ; Make A positive
-00:12D9 24FC            	   494:    bit FP_A+1
-00:12DB 100D            	   495:    bpl square_c$
-00:12DD A900            	   496:    lda #0
-00:12DF 38              	   497:    sec
-00:12E0 E5FB            	   498:    sbc FP_A
-00:12E2 85FB            	   499:    sta FP_A
-00:12E4 A900            	   500:    lda #0
-00:12E6 E5FC            	   501:    sbc FP_A+1
-00:12E8 85FC            	   502:    sta FP_A+1 ; A = |A|
-                        	   503: square_c$:
-                        	   504: 
-00:12EA A5FB            	   505:    lda FP_A
-00:12EC 8518            	   506:    sta CP_B
-00:12EE A5FC            	   507:    lda FP_A+1
-00:12F0 8510            	   508:    sta CP_A
-                        	   509: 
-00:12F2 A505            	   510:    lda CP_S1
-00:12F4 85F0            	   511:    sta FP_C
-00:12F6 A506            	   512:    lda CP_S2
-00:12F8 85F1            	   513:    sta FP_C+1
-00:12FA A507            	   514:    lda CP_S3
-00:12FC 85F2            	   515:    sta FP_R
-                        	   516: 
-00:12FE 68              	   517:    pla
-00:12FF 85FC            	   518:    sta FP_A+1
-00:1301 68              	   519:    pla
-00:1302 85FB            	   520:    sta FP_A
-                        	   521: return$:
-00:1304 7A              	   522:    ply
-00:1305 FA              	   523:    plx
-00:1306 60              	   524:    rts
-                        	   525: 
+                        	   453:    ; restore A and B
+00:12A6 68              	   454:    pla
+00:12A7 85FE            	   455:    sta FP_B+1
+00:12A9 68              	   456:    pla
+00:12AA 85FD            	   457:    sta FP_B
+00:12AC 68              	   458:    pla
+00:12AD 85FC            	   459:    sta FP_A+1
+00:12AF 68              	   460:    pla
+00:12B0 85FB            	   461:    sta FP_A
+00:12B2 24FE            	   462:    bit FP_B+1
+00:12B4 3007            	   463:    bmi check_cancel$
+00:12B6 24FC            	   464:    bit FP_A+1
+00:12B8 3007            	   465:    bmi negative$
+00:12BA 4CCE12          	   466:    jmp return$
+                        	   467: check_cancel$:
+00:12BD 24FC            	   468:    bit FP_A+1
+00:12BF 300D            	   469:    bmi return$
+                        	   470: negative$:
+00:12C1 A900            	   471:    lda #0
+00:12C3 38              	   472:    sec
+00:12C4 E5F0            	   473:    sbc FP_C
+00:12C6 85F0            	   474:    sta FP_C
+00:12C8 A900            	   475:    lda #0
+00:12CA E5F1            	   476:    sbc FP_C+1
+00:12CC 85F1            	   477:    sta FP_C+1
+                        	   478: return$:
+00:12CE 7A              	   479:    ply
+00:12CF FA              	   480:    plx
+00:12D0 60              	   481:    rts
+                        	   482: 
+                        	   483: ; Use co-pro lookup for squares: $10 MSB $18 LSB. result $04,$05,$06,$07 LSB to MSB
+                        	   484: cp_square:
+00:12D1 DA              	   485:    phx
+00:12D2 5A              	   486:    phy
+                        	   487:    ; push original FP_A to stack & copy to FP_B
+00:12D3 A5FB            	   488:    lda FP_A
+00:12D5 48              	   489:    pha
+00:12D6 A5FC            	   490:    lda FP_A+1
+00:12D8 48              	   491:    pha
+                        	   492:    ; Make A positive
+00:12D9 24FC            	   493:    bit FP_A+1
+00:12DB 100D            	   494:    bpl square_c$
+00:12DD A900            	   495:    lda #0
+00:12DF 38              	   496:    sec
+00:12E0 E5FB            	   497:    sbc FP_A
+00:12E2 85FB            	   498:    sta FP_A
+00:12E4 A900            	   499:    lda #0
+00:12E6 E5FC            	   500:    sbc FP_A+1
+00:12E8 85FC            	   501:    sta FP_A+1 ; A = |A|
+                        	   502: square_c$:
+00:12EA A5FB            	   503:    lda FP_A
+00:12EC 8518            	   504:    sta CP_B
+00:12EE A5FC            	   505:    lda FP_A+1
+00:12F0 8510            	   506:    sta CP_A
+                        	   507: 
+00:12F2 A505            	   508:    lda CP_S1
+00:12F4 85F0            	   509:    sta FP_C
+00:12F6 A506            	   510:    lda CP_S2
+00:12F8 85F1            	   511:    sta FP_C+1
+00:12FA A507            	   512:    lda CP_S3
+00:12FC 85F2            	   513:    sta FP_R
+                        	   514: 
+00:12FE 68              	   515:    pla
+00:12FF 85FC            	   516:    sta FP_A+1
+00:1301 68              	   517:    pla
+00:1302 85FB            	   518:    sta FP_A
+                        	   519: return$:
+00:1304 7A              	   520:    ply
+00:1305 FA              	   521:    plx
+00:1306 60              	   522:    rts
+                        	   523: 
 
-Source: "mandel_copro.s"
+Source: "mandel.s"
                         	     2: 
                         	     3: MAND_XMIN = $FD80 ; -2.5
                         	     4: MAND_XMAX = $0380 ; 3.5
@@ -647,7 +645,7 @@ Source: "mandel_copro.s"
 00:131D 85FD            	     2M    sta FP_B
 00:131F A903            	     3M    lda #>MAND_XMAX  
 00:1321 85FE            	     4M    sta FP_B+1
-00:1323 202B12          	    29:    jsr cp_multiply   ; C = A*B
+00:1323 203E11          	    29:    jsr fp_multiply   ; C = A*B
                         	    30:    FP_TCA            ; A = C (X*Xmax)
 00:1326 A5F0            	     1M    lda FP_C
 00:1328 85FB            	     2M    sta FP_A
@@ -682,7 +680,7 @@ Source: "mandel_copro.s"
 00:135B 85FD            	     2M    sta FP_B
 00:135D A902            	     3M    lda #>MAND_YMAX  
 00:135F 85FE            	     4M    sta FP_B+1
-00:1361 202B12          	    41:    jsr cp_multiply   ; C = A*B
+00:1361 203E11          	    41:    jsr fp_multiply   ; C = A*B
                         	    42:    FP_TCA            ; A = C (Y*Ymax)
 00:1364 A5F0            	     1M    lda FP_C
 00:1366 85FB            	     2M    sta FP_A
@@ -720,104 +718,114 @@ Source: "mandel_copro.s"
 00:13A3 85FB            	     2M    sta FP_A
 00:13A5 AD0C13          	     3M    lda mand_x     +1
 00:13A8 85FC            	     4M    sta FP_A+1
-00:13AA 20D112          	    56:    jsr cp_square     ; C = X^2
-                        	    57:    FP_STC mand_x2
-00:13AD A5F0            	     1M    lda FP_C
-00:13AF 8D0F13          	     2M    sta mand_x2
-00:13B2 A5F1            	     3M    lda FP_C+1
-00:13B4 8D1013          	     4M    sta mand_x2+1
-                        	    58:    FP_LDA mand_y     ; A = Y
-00:13B7 AD0D13          	     1M    lda mand_y     
-00:13BA 85FB            	     2M    sta FP_A
-00:13BC AD0E13          	     3M    lda mand_y     +1
-00:13BF 85FC            	     4M    sta FP_A+1
-00:13C1 20D112          	    59:    jsr cp_square     ; C = Y^2
-                        	    60:    FP_STC mand_y2
-00:13C4 A5F0            	     1M    lda FP_C
-00:13C6 8D1113          	     2M    sta mand_y2
-00:13C9 A5F1            	     3M    lda FP_C+1
-00:13CB 8D1213          	     4M    sta mand_y2+1
-                        	    61:    FP_LDA mand_x2    ; A = X^2
-00:13CE AD0F13          	     1M    lda mand_x2    
-00:13D1 85FB            	     2M    sta FP_A
-00:13D3 AD1013          	     3M    lda mand_x2    +1
-00:13D6 85FC            	     4M    sta FP_A+1
-                        	    62:    FP_TCB            ; B = Y^2
+                        	    56:    FP_LDB mand_x     ; B = X
+00:13AA AD0B13          	     1M    lda mand_x     
+00:13AD 85FD            	     2M    sta FP_B
+00:13AF AD0C13          	     3M    lda mand_x     +1
+00:13B2 85FE            	     4M    sta FP_B+1
+00:13B4 203E11          	    57:    jsr fp_multiply   ; C = X^2
+                        	    58:    FP_STC mand_x2
+00:13B7 A5F0            	     1M    lda FP_C
+00:13B9 8D0F13          	     2M    sta mand_x2
+00:13BC A5F1            	     3M    lda FP_C+1
+00:13BE 8D1013          	     4M    sta mand_x2+1
+                        	    59:    FP_LDA mand_y     ; A = Y
+00:13C1 AD0D13          	     1M    lda mand_y     
+00:13C4 85FB            	     2M    sta FP_A
+00:13C6 AD0E13          	     3M    lda mand_y     +1
+00:13C9 85FC            	     4M    sta FP_A+1
+                        	    60:    FP_LDB mand_y     ; B = Y
+00:13CB AD0D13          	     1M    lda mand_y     
+00:13CE 85FD            	     2M    sta FP_B
+00:13D0 AD0E13          	     3M    lda mand_y     +1
+00:13D3 85FE            	     4M    sta FP_B+1
+00:13D5 203E11          	    61:    jsr fp_multiply   ; C = Y^2
+                        	    62:    FP_STC mand_y2
 00:13D8 A5F0            	     1M    lda FP_C
-00:13DA 85FD            	     2M    sta FP_B
-00:13DC A5F1            	     3M    lda FP_C+1
-00:13DE 85FE            	     4M    sta FP_B+1
-00:13E0 20AC10          	    63:    jsr fp_add        ; C = X^2+Y^2
-00:13E3 A5F1            	    64:    lda FP_C+1
-00:13E5 38              	    65:    sec
-00:13E6 E904            	    66:    sbc #4
-00:13E8 F005            	    67:    beq .check_fraction
-00:13EA 3007            	    68:    bmi .do_it
-00:13EC 4C6314          	    69:    jmp .dec_i
-                        	    70: .check_fraction:
-00:13EF A5F0            	    71:    lda FP_C
-00:13F1 D070            	    72:    bne .dec_i
-                        	    73: .do_it:
-00:13F3 209E10          	    74:    jsr fp_subtract   ; C = X^2 - Y^2
-                        	    75:    FP_TCA            ; A = C (X^2 - Y^2)
-00:13F6 A5F0            	     1M    lda FP_C
-00:13F8 85FB            	     2M    sta FP_A
-00:13FA A5F1            	     3M    lda FP_C+1
-00:13FC 85FC            	     4M    sta FP_A+1
-                        	    76:    FP_LDB mand_x0    ; B = X0
-00:13FE AD0713          	     1M    lda mand_x0    
-00:1401 85FD            	     2M    sta FP_B
-00:1403 AD0813          	     3M    lda mand_x0    +1
-00:1406 85FE            	     4M    sta FP_B+1
-00:1408 20AC10          	    77:    jsr fp_add        ; C = X^2 - Y^2 + X0
-                        	    78:    FP_STC mand_xtemp ; Xtemp = C
-00:140B A5F0            	     1M    lda FP_C
-00:140D 8D1313          	     2M    sta mand_xtemp 
-00:1410 A5F1            	     3M    lda FP_C+1
-00:1412 8D1413          	     4M    sta mand_xtemp +1
-                        	    79:    FP_LDA mand_x     ; A = X
-00:1415 AD0B13          	     1M    lda mand_x     
-00:1418 85FB            	     2M    sta FP_A
-00:141A AD0C13          	     3M    lda mand_x     +1
-00:141D 85FC            	     4M    sta FP_A+1
-00:141F 06FB            	    80:    asl FP_A
-00:1421 26FC            	    81:    rol FP_A+1        ; A = 2*X
-                        	    82:    FP_LDB mand_y     ; B = Y
-00:1423 AD0D13          	     1M    lda mand_y     
-00:1426 85FD            	     2M    sta FP_B
-00:1428 AD0E13          	     3M    lda mand_y     +1
-00:142B 85FE            	     4M    sta FP_B+1
-00:142D 202B12          	    83:    jsr cp_multiply   ; C = 2*X*Y
-                        	    84:    FP_TCA            ; A = C (2*X*Y)
-00:1430 A5F0            	     1M    lda FP_C
-00:1432 85FB            	     2M    sta FP_A
-00:1434 A5F1            	     3M    lda FP_C+1
-00:1436 85FC            	     4M    sta FP_A+1
-                        	    85:    FP_LDB mand_y0    ; B = Y0
-00:1438 AD0913          	     1M    lda mand_y0    
-00:143B 85FD            	     2M    sta FP_B
-00:143D AD0A13          	     3M    lda mand_y0    +1
-00:1440 85FE            	     4M    sta FP_B+1
-00:1442 20AC10          	    86:    jsr fp_add        ; C = 2*X*Y + Y0
-                        	    87:    FP_STC mand_y     ; Y = C (2*X*Y + Y0)
-00:1445 A5F0            	     1M    lda FP_C
-00:1447 8D0D13          	     2M    sta mand_y     
-00:144A A5F1            	     3M    lda FP_C+1
-00:144C 8D0E13          	     4M    sta mand_y     +1
-00:144F AD1313          	    88:    lda mand_xtemp
-00:1452 8D0B13          	    89:    sta mand_x
-00:1455 AD1413          	    90:    lda mand_xtemp+1
-00:1458 8D0C13          	    91:    sta mand_x+1      ; X = Xtemp
-00:145B E8              	    92:    inx
-00:145C E00F            	    93:    cpx #MAND_MAX_IT
-00:145E F003            	    94:    beq .dec_i
-00:1460 4CA013          	    95:    jmp .loop
-                        	    96: .dec_i:
-00:1463 CA              	    97:    dex
-00:1464 8A              	    98:    txa
-00:1465 7A              	    99:    ply
-00:1466 FA              	   100:    plx
-00:1467 60              	   101:    rts
+00:13DA 8D1113          	     2M    sta mand_y2
+00:13DD A5F1            	     3M    lda FP_C+1
+00:13DF 8D1213          	     4M    sta mand_y2+1
+                        	    63:    FP_LDA mand_x2    ; A = X^2
+00:13E2 AD0F13          	     1M    lda mand_x2    
+00:13E5 85FB            	     2M    sta FP_A
+00:13E7 AD1013          	     3M    lda mand_x2    +1
+00:13EA 85FC            	     4M    sta FP_A+1
+                        	    64:    FP_TCB            ; B = Y^2
+00:13EC A5F0            	     1M    lda FP_C
+00:13EE 85FD            	     2M    sta FP_B
+00:13F0 A5F1            	     3M    lda FP_C+1
+00:13F2 85FE            	     4M    sta FP_B+1
+00:13F4 20AC10          	    65:    jsr fp_add        ; C = X^2+Y^2
+00:13F7 A5F1            	    66:    lda FP_C+1
+00:13F9 38              	    67:    sec
+00:13FA E904            	    68:    sbc #4
+00:13FC F005            	    69:    beq .check_fraction
+00:13FE 3007            	    70:    bmi .do_it
+00:1400 4C7714          	    71:    jmp .dec_i
+                        	    72: .check_fraction:
+00:1403 A5F0            	    73:    lda FP_C
+00:1405 D070            	    74:    bne .dec_i
+                        	    75: .do_it:
+00:1407 209E10          	    76:    jsr fp_subtract   ; C = X^2 - Y^2
+                        	    77:    FP_TCA            ; A = C (X^2 - Y^2)
+00:140A A5F0            	     1M    lda FP_C
+00:140C 85FB            	     2M    sta FP_A
+00:140E A5F1            	     3M    lda FP_C+1
+00:1410 85FC            	     4M    sta FP_A+1
+                        	    78:    FP_LDB mand_x0    ; B = X0
+00:1412 AD0713          	     1M    lda mand_x0    
+00:1415 85FD            	     2M    sta FP_B
+00:1417 AD0813          	     3M    lda mand_x0    +1
+00:141A 85FE            	     4M    sta FP_B+1
+00:141C 20AC10          	    79:    jsr fp_add        ; C = X^2 - Y^2 + X0
+                        	    80:    FP_STC mand_xtemp ; Xtemp = C
+00:141F A5F0            	     1M    lda FP_C
+00:1421 8D1313          	     2M    sta mand_xtemp 
+00:1424 A5F1            	     3M    lda FP_C+1
+00:1426 8D1413          	     4M    sta mand_xtemp +1
+                        	    81:    FP_LDA mand_x     ; A = X
+00:1429 AD0B13          	     1M    lda mand_x     
+00:142C 85FB            	     2M    sta FP_A
+00:142E AD0C13          	     3M    lda mand_x     +1
+00:1431 85FC            	     4M    sta FP_A+1
+00:1433 06FB            	    82:    asl FP_A
+00:1435 26FC            	    83:    rol FP_A+1        ; A = 2*X
+                        	    84:    FP_LDB mand_y     ; B = Y
+00:1437 AD0D13          	     1M    lda mand_y     
+00:143A 85FD            	     2M    sta FP_B
+00:143C AD0E13          	     3M    lda mand_y     +1
+00:143F 85FE            	     4M    sta FP_B+1
+00:1441 203E11          	    85:    jsr fp_multiply   ; C = 2*X*Y
+                        	    86:    FP_TCA            ; A = C (2*X*Y)
+00:1444 A5F0            	     1M    lda FP_C
+00:1446 85FB            	     2M    sta FP_A
+00:1448 A5F1            	     3M    lda FP_C+1
+00:144A 85FC            	     4M    sta FP_A+1
+                        	    87:    FP_LDB mand_y0    ; B = Y0
+00:144C AD0913          	     1M    lda mand_y0    
+00:144F 85FD            	     2M    sta FP_B
+00:1451 AD0A13          	     3M    lda mand_y0    +1
+00:1454 85FE            	     4M    sta FP_B+1
+00:1456 20AC10          	    88:    jsr fp_add        ; C = 2*X*Y + Y0
+                        	    89:    FP_STC mand_y     ; Y = C (2*X*Y + Y0)
+00:1459 A5F0            	     1M    lda FP_C
+00:145B 8D0D13          	     2M    sta mand_y     
+00:145E A5F1            	     3M    lda FP_C+1
+00:1460 8D0E13          	     4M    sta mand_y     +1
+00:1463 AD1313          	    90:    lda mand_xtemp
+00:1466 8D0B13          	    91:    sta mand_x
+00:1469 AD1413          	    92:    lda mand_xtemp+1
+00:146C 8D0C13          	    93:    sta mand_x+1      ; X = Xtemp
+00:146F E8              	    94:    inx
+00:1470 E00F            	    95:    cpx #MAND_MAX_IT
+00:1472 F003            	    96:    beq .dec_i
+00:1474 4CA013          	    97:    jmp .loop
+                        	    98: .dec_i:
+00:1477 CA              	    99:    dex
+00:1478 8A              	   100:    txa
+00:1479 7A              	   101:    ply
+00:147A FA              	   102:    plx
+00:147B 60              	   103:    rts
 
 Source: ".\Examples\mandelbrot.s"
                         	    31: 

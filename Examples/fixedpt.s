@@ -406,12 +406,7 @@ check_sign_b$:
    sta FP_B+1 ; B = |B|
 init_c$:
 ; The magic happens here
-   ; Init C ard R
-   lda #0
-   sta FP_C
-   sta FP_C+1
-   sta FP_R
-
+   ; Init C and R
    lda FP_A
    sta CP_A
    lda FP_B
@@ -425,7 +420,7 @@ init_c$:
    lda FP_C
    adc CP_ML
    sta FP_C
-   lda FP_C+1
+   lda #0
    adc CP_MH
    sta FP_C+1
 
@@ -447,10 +442,9 @@ init_c$:
    lda FP_C+1
    adc CP_ML
    sta FP_C+1
-   lda FP_R
+   lda #0
    adc CP_MH
    sta FP_R
-;
    ; restore A and B
    pla
    sta FP_B+1
@@ -501,7 +495,6 @@ cp_square:
    sbc FP_A+1
    sta FP_A+1 ; A = |A|
 square_c$:
-
    lda FP_A
    sta CP_B
    lda FP_A+1

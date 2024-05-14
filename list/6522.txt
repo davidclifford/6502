@@ -1,0 +1,94 @@
+Sections:
+00: "org0001:1000" (1000-10E4)
+
+
+Source: ".\Examples\6522.s"
+                        	     1: IO_DATA = $c000
+                        	     2: IO_STATUS = $c001
+                        	     3: IO_DDR_DATA = $c002
+                        	     4: IO_DDR_CTRL = $c003
+                        	     5: 
+                        	     6: IO_RD = %00000001
+                        	     7: IO_WR = %00000010
+                        	     8: TXE = %10000000
+                        	     9: RXE = %01000000
+                        	    10: 
+                        	    11:     .org $1000
+                        	    12: 
+00:1000 A9FF            	    13:     LDA     #$FF                    ;
+00:1002 8D02C0          	    14:     STA IO_DDR_DATA                 ; UART All output (default)
+00:1005 A903            	    15:     LDA     #$03                    ;
+00:1007 8D03C0          	    16:     STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input
+                        	    17: 
+                        	    18: loop:
+00:100A A200            	    19:     ldx #0
+                        	    20: wait:
+00:100C BD2F10          	    21:     lda message,x                   ; Set PORT A to next char
+00:100F F0F9            	    22:     beq loop
+00:1011 201710          	    23:     jsr ECHO
+00:1014 E8              	    24:     inx
+00:1015 80F5            	    25:     bra wait
+                        	    26: 
+                        	    27: ECHO:
+00:1017 2C01C0          	    28:     BIT     IO_STATUS               ; Wait for output to be ready
+00:101A 30FB            	    29:     BMI     ECHO
+00:101C 8D00C0          	    30:     STA     IO_DATA                 ; Output Character to UART
+00:101F A903            	    31:     LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+00:1021 8D01C0          	    32:     STA     IO_STATUS
+00:1024 A902            	    33:     LDA     #IO_WR                  ; Write (active low)
+00:1026 8D01C0          	    34:     STA     IO_STATUS
+00:1029 A903            	    35:     LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+00:102B 8D01C0          	    36:     STA     IO_STATUS
+00:102E 60              	    37:     RTS                             ; Return.
+                        	    38: 
+00:102F 5468652071756963	    39: message: .asciiz "The quick brown fox jumps over the lazy dog! The quick brown fox jumps over the lazy dog! The quick b
+00:1037 6B2062726F776E20
+00:103F 666F78206A756D70
+00:1047 73206F7665722074
+00:104F 6865206C617A7920
+00:1057 646F672120546865
+00:105F 20717569636B2062
+00:1067 726F776E20666F78
+00:106F 206A756D7073206F
+00:1077 7665722074686520
+00:107F 6C617A7920646F67
+00:1087 2120546865207175
+00:108F 69636B2062726F77
+00:1097 6E20666F78206A75
+00:109F 6D7073206F766572
+00:10A7 20746865206C617A
+00:10AF 7920646F67212054
+00:10B7 686520717569636B
+00:10BF 2062726F776E2066
+00:10C7 6F78206A756D7073
+00:10CF 206F766572207468
+00:10D7 65206C617A792064
+00:10DF 6F6721
+00:10E2 0A
+00:10E3 00
+                        	    40: 
+
+
+Symbols by name:
+ECHO                             A:1017
+IO_DATA                          E:C000
+IO_DDR_CTRL                      E:C003
+IO_DDR_DATA                      E:C002
+IO_RD                            E:0001
+IO_STATUS                        E:C001
+IO_WR                            E:0002
+loop                             A:100A
+message                          A:102F
+wait                             A:100C
+
+Symbols by value:
+0001 IO_RD
+0002 IO_WR
+100A loop
+100C wait
+1017 ECHO
+102F message
+C000 IO_DATA
+C001 IO_STATUS
+C002 IO_DDR_DATA
+C003 IO_DDR_CTRL

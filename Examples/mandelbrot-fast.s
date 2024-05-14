@@ -1,5 +1,5 @@
-    ; Mandelbrot using Michael Kamprath's algorithm
-    .org $1000
+    ; Mandelbrot using co-processor
+    .org $2000
 
     ; Start
     lda #10
@@ -27,4 +27,4 @@ loopx:
     jmp $c100
 
     .include io.s
-    .include mandel.s
+    .include mandel_copro.s
