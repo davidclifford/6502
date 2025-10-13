@@ -1,5 +1,4 @@
   .org $C000
-  .org $C100
 
 KEYPRESS = $82                      ; Last key pressed
 XAML  = $84                         ; Last "opened" location Low
@@ -13,25 +12,22 @@ MODE  = $8B                         ; $00=XAM, $7F=STOR, $AE=BLOCK XAM
 
 IN    = $0200                       ; Input buffer
 
-IO_DATA   = $C000
-IO_STATUS = $C001
-IO_DDR_DATA  = $C002
-IO_DDR_CTRL  = $C003
-IO_RD        = %00000001
-IO_WR        = %00000010
+ACIA_DATA   = $A000
+ACIA_STATUS = $A001
+ACIA_CMD    = $A002
+ACIA_CTRL   = $A003
 
 RESET:
                 CLD
                 LDX     #$FF
                 TXS
 
-                LDA     #$FF                    ;
-                STA IO_DDR_DATA                 ; UART All output (default)
-                LDA     #$03                    ;
-                STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
+                LDA     #$10           ; 8-N-1, 115200 baud.
+                STA     ACIA_CTRL
+                LDA     #$0B           ; No parity, no echo, no interrupts.
+                STA     ACIA_CMD
 OS:
-                LDA     #$1B                    ; Begin with escape.
-
+                LDA     #$1B           ; Begin with escape.
 NOTCR:
                 CMP     #$08                    ; Backspace key?
                 BEQ     BACKSPACE               ; Yes.
@@ -41,7 +37,7 @@ NOTCR:
                 BPL     NEXTCHAR                ; Auto ESC if line longer than 127.
 
 ESCAPE:
-                LDA     #'/'                    ; "/".
+                LDA     #'>'                    ; "/".
                 JSR     ECHO                    ; Output it.
 
 GETLINE:
@@ -58,19 +54,22 @@ BACKSPACE:
                 BMI     GETLINE                 ; Beyond start of line, reinitialize.
 
 NEXTCHAR:
-                JSR     INPUTKEY                ; Get Keypress
-                STA     IN,Y                    ; Add to text buffer.
-                JSR     ECHO                    ; Display character.
-                CMP     #$0A                    ; CR?
-                BNE     NOTCR                   ; No.
+                LDA     ACIA_STATUS    ; Check status.
+                AND     #$08           ; Key ready?
+                BEQ     NEXTCHAR       ; Loop until ready.
+                LDA     ACIA_DATA      ; Load character. B7 will be '0'.
+                STA     IN,Y           ; Add to text buffer.
+                JSR     ECHO           ; Display character.
+                CMP     #$0A           ; CR?
+                BNE     NOTCR          ; No.
 
-                LDY     #$FF                    ; Reset text index.
-                LDA     #$00                    ; For XAM mode.
-                TAX                             ; X=0.
+                LDY     #$FF           ; Reset text index.
+                LDA     #$00           ; For XAM mode.
+                TAX                    ; X=0.
 SETBLOCK:
                 ASL
 SETSTOR:
-                ASL                             ; Leaves $7B if setting STOR mode.
+                ASL                             ; Leaves $74 if setting STOR mode.
                 STA     MODE                    ; $00 = XAM, $74 = STOR, $B8 = BLOK XAM.
 BLSKIP:
                 INY                             ; Advance text index.
@@ -84,7 +83,7 @@ NEXTITEM:
                 CMP     #':'                    ; ":"?
                 BEQ     SETSTOR                 ; Yes, set STOR mode.
                 CMP     #'R'                    ; "R"?
-                BEQ     RUN                     ; Yes, run user program.
+                BEQ     RUNIT                   ; Yes, run user program.
                 STX     L                       ; $00 -> L.
                 STX     H                       ;    and H.
                 STY     YSAV                    ; Save Y for comparison
@@ -127,6 +126,9 @@ NOTHEX:
                 INC     STH                     ; Add carry to 'store index' high order.
 TONEXTITEM:     JMP     NEXTITEM                ; Get next command item.
 
+RUNIT:
+                JSR     RUN                     ; Jump to program so RTS will go back to OS
+                JMP     OS
 RUN:
                 JMP     (XAML)                  ; Run at current XAM index.
 
@@ -189,37 +191,15 @@ PRHEX:
                 ADC     #$06                    ; Add offset for letter.
 
 ECHO:
-                BIT     IO_STATUS               ; Wait for output to be ready
-                BMI     ECHO
-                STA     IO_DATA                 ; Output Character to UART
-                PHA
-                LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
-                STA     IO_STATUS
-                LDA     #IO_WR                  ; Write (active low)
-                STA     IO_STATUS
-                LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
-                STA     IO_STATUS
-                PLA
-                RTS                             ; Return.
-
-INPUTKEY:
-                BIT     IO_STATUS               ; Wait for keypress
-                BVS     INPUTKEY
-
-                LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
-                STA     IO_DDR_DATA
-                LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
-                STA     IO_STATUS
-                LDA     IO_DATA                 ; READ DATA (KEYPRESS)
-                STA     KEYPRESS                ; SAVE DATA
-                LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
-                STA     IO_STATUS
-                LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
-                STA     IO_DDR_DATA
-                LDA     KEYPRESS                ; RESTORE KEYPESS
-                RTS
+                PHA                    ; Save A.
+                STA     ACIA_DATA      ; Output character.
+                LDA     #$FF           ; Initialize delay loop.
+TXDELAY:        DEC                    ; Decrement A.
+                BNE     TXDELAY        ; Until A gets to 0.
+                PLA                    ; Restore A.
+                RTS                    ; Return.
 
                 .org    $FFFA                       ; ---VECTORS---
-                .word   $0F00                       ; NMI vector
+                .word   RESET                       ; NMI vector
                 .word   RESET                       ; RESET vector
                 .word   $0000                       ; IRQ vector

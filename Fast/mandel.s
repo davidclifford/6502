@@ -6,8 +6,8 @@ MAND_YMIN = $FF00 ; -1
 MAND_YMAX = $0200 ; 2
 
 MAND_WIDTH = 32
-MAND_HEIGHT = 22
-MAND_MAX_IT = 63
+MAND_HEIGHT = 24
+MAND_MAX_IT = 15
 
 mand_x0:       .word 0
 mand_y0:       .word 0
@@ -26,7 +26,7 @@ mand_get:
    txa
    jsr fp_lda_byte   ; A = X coordinate
    FP_LDB_IMM MAND_XMAX  ; B = max scaled X
-   jsr cp_multiply   ; C = A*B
+   jsr fp_multiply   ; C = A*B
    FP_TCA            ; A = C (X*Xmax)
    FP_LDB_IMM_INT MAND_WIDTH ; B = width
    jsr fp_divide     ; C = A/B
@@ -38,7 +38,7 @@ mand_get:
    pha               ; put Y back on stack
    jsr fp_lda_byte   ; A = Y coordinate
    FP_LDB_IMM MAND_YMAX  ; B = max scaled Y
-   jsr cp_multiply   ; C = A*B
+   jsr fp_multiply   ; C = A*B
    FP_TCA            ; A = C (Y*Ymax)
    FP_LDB_IMM_INT  MAND_HEIGHT ; B = height
    jsr fp_divide     ; C = A/B
@@ -53,10 +53,12 @@ mand_get:
    ldx #0            ; X = I (init to 0)
 .loop:
    FP_LDA mand_x     ; A = X
-   jsr cp_square     ; C = X^2
+   FP_LDB mand_x     ; B = X
+   jsr fp_multiply   ; C = X^2
    FP_STC mand_x2
    FP_LDA mand_y     ; A = Y
-   jsr cp_square     ; C = Y^2
+   FP_LDB mand_y     ; B = Y
+   jsr fp_multiply   ; C = Y^2
    FP_STC mand_y2
    FP_LDA mand_x2    ; A = X^2
    FP_TCB            ; B = Y^2
@@ -80,7 +82,7 @@ mand_get:
    asl FP_A
    rol FP_A+1        ; A = 2*X
    FP_LDB mand_y     ; B = Y
-   jsr cp_multiply   ; C = 2*X*Y
+   jsr fp_multiply   ; C = 2*X*Y
    FP_TCA            ; A = C (2*X*Y)
    FP_LDB mand_y0    ; B = Y0
    jsr fp_add        ; C = 2*X*Y + Y0

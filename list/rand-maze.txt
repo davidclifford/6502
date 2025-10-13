@@ -1,0 +1,113 @@
+Sections:
+00: "org0001:1000" (1000-1067)
+
+
+Source: "Fast\rand-maze.s"
+                        	     1:         .org $1000
+                        	     2: 
+00:1000 A90A            	     3:         LDA     #10
+00:1002 203910          	     4:         JSR     IO_ECHO
+                        	     5: LOOP:
+00:1005 201B10          	     6:         JSR     RAND
+00:1008 AD3810          	     7:         LDA     XSHFT+1
+00:100B 3007            	     8:         BMI     BS
+00:100D A92F            	     9:         LDA     #'/'
+00:100F 203910          	    10:         JSR     IO_ECHO
+00:1012 80F1            	    11:         BRA     LOOP
+                        	    12: BS:
+00:1014 A95C            	    13:         LDA     #'\'
+00:1016 203910          	    14:         JSR     IO_ECHO
+00:1019 80EA            	    15:         BRA     LOOP
+                        	    16: 
+                        	    17: RAND:
+00:101B AD3810          	    18:         LDA     XSHFT+1
+00:101E 6A              	    19:         ROR
+00:101F AD3710          	    20:         LDA     XSHFT
+00:1022 6A              	    21:         ROR
+00:1023 4D3810          	    22:         EOR     XSHFT+1
+00:1026 8D3810          	    23:         STA     XSHFT+1
+00:1029 6A              	    24:         ROR
+00:102A 4D3710          	    25:         EOR     XSHFT
+00:102D 8D3710          	    26:         STA     XSHFT
+00:1030 4D3810          	    27:         EOR     XSHFT+1
+00:1033 8D3810          	    28:         STA     XSHFT+1
+00:1036 60              	    29:         RTS
+                        	    30: 
+00:1037 3412            	    31: XSHFT:  DW     $1234
+                        	    32: 
+                        	    33:         .include    "io.s"
+
+Source: "io.s"
+                        	     1: ACIA := $FF70
+                        	     2: ACIAControl := ACIA+0
+                        	     3: ACIAStatus := ACIA+0
+                        	     4: ACIAData := ACIA+1
+                        	     5: 
+                        	     6: ; Output character in A and return.
+                        	     7: IO_ECHO:
+00:1039 48              	     8: 	PHA
+                        	     9: SerialOutWait:
+00:103A AD70FF          	    10: 	LDA	ACIAStatus
+00:103D 2902            	    11: 	AND	#2
+00:103F C902            	    12: 	CMP	#2
+00:1041 D0F7            	    13: 	BNE	SerialOutWait
+00:1043 68              	    14: 	PLA
+00:1044 8D71FF          	    15: 	STA	ACIAData
+00:1047 60              	    16: 	RTS
+                        	    17: 
+                        	    18: ; Wait for key and return code in A
+                        	    19: IO_KEY:
+00:1048 AD70FF          	    20:     LDA	    ACIAStatus
+00:104B 2901            	    21:     AND	    #1
+00:104D C901            	    22:     CMP	    #1
+00:104F D0F7            	    23:     BNE     IO_KEY
+00:1051 AD71FF          	    24:     LDA	    ACIAData
+00:1054 60              	    25:     RTS
+                        	    26: 
+                        	    27: ; Get next key press in A and set Carry.
+                        	    28: ; If no key then clear carry and return zero in A.
+                        	    29: IO_INKEY:
+00:1055 AD70FF          	    30:     LDA	    ACIAStatus
+00:1058 2901            	    31:     AND	    #1
+00:105A C901            	    32:     CMP	    #1
+00:105C D005            	    33:     BNE     NoKey
+00:105E AD71FF          	    34:     LDA	    ACIAData
+00:1061 38              	    35:     SEC
+00:1062 60              	    36:     RTS
+                        	    37: NoKey:
+00:1063 A900            	    38:     LDA     #0
+00:1065 18              	    39:     CLC
+00:1066 60              	    40:     RTS
+                        	    41: 
+
+Source: "Fast\rand-maze.s"
+                        	    34: 
+
+
+Symbols by name:
+ACIA                             E:FF70
+ACIAData                         E:FF71
+ACIAStatus                       E:FF70
+BS                               A:1014
+IO_ECHO                          A:1039
+IO_INKEY                         A:1055
+IO_KEY                           A:1048
+LOOP                             A:1005
+NoKey                            A:1063
+RAND                             A:101B
+SerialOutWait                    A:103A
+XSHFT                            A:1037
+
+Symbols by value:
+1005 LOOP
+1014 BS
+101B RAND
+1037 XSHFT
+1039 IO_ECHO
+103A SerialOutWait
+1048 IO_KEY
+1055 IO_INKEY
+1063 NoKey
+FF70 ACIA
+FF70 ACIAStatus
+FF71 ACIAData

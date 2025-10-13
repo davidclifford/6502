@@ -1,27 +1,79 @@
 Sections:
-00: "org0001:1000" (1000-1007)
+00: "org0001:8000" (8000-8000)
+01: "org0002:f000" (F000-F035)
+02: "org0003:fffa" (FFFA-0)
 
 
-Source: ".\Examples\test.s"
-                        	     1: DAVE .macro fred
-                        	     2:     pha
-                        	     3:     pla
-                        	     4:     ldx #\fred
-                        	     5: .endmacro
-                        	     6: 
-                        	     7:     .org $1000
-                        	     8: start:
-00:1000 A901            	     9:     lda #1
-                        	    10:     DAVE 2
-00:1002 48              	     1M     pha
-00:1003 68              	     2M     pla
-00:1004 A202            	     3M     ldx #2
-00:1006 60              	    11:     rts
-                        	    12: 
+Source: "Fast\test.s"
+                        	     1: ACIA := $FF70
+                        	     2: ACIAControl := ACIA+0
+                        	     3: ACIAStatus := ACIA+0
+                        	     4: ACIAData := ACIA+1
+                        	     5: 
+                        	     6:     .org $8000
+                        	     7:     .org $F000
+                        	     8: Reset:
+01:F000 A200            	     9: 	LDX     #0
+01:F002 9A              	    10: 	TXS
+                        	    11: 
+01:F003 A995            	    12: 	LDA 	#$95		; Set ACIA baud rate, word size and Rx interrupt (to control RTS)
+01:F005 8D70FF          	    13: 	STA	ACIAControl
+                        	    14: Start:
+                        	    15: ; Display startup message
+01:F008 A000            	    16: 	LDY #0
+                        	    17: ShowStartMsg:
+01:F00A B924F0          	    18: 	LDA	StartupMessage,Y
+01:F00D 2015F0          	    19: 	JSR	MONCOUT
+01:F010 C8              	    20: 	INY
+01:F011 D0F7            	    21: 	BNE	ShowStartMsg
+01:F013 80F3            	    22:     BRA Start
+                        	    23: 
+                        	    24: MONCOUT:
+01:F015 48              	    25: 	PHA
+                        	    26: SerialOutWait:
+01:F016 AD70FF          	    27: 	LDA	ACIAStatus
+01:F019 2902            	    28: 	AND	#2
+01:F01B C902            	    29: 	CMP	#2
+01:F01D D0F7            	    30: 	BNE	SerialOutWait
+01:F01F 68              	    31: 	PLA
+01:F020 8D71FF          	    32: 	STA	ACIAData
+01:F023 60              	    33: 	RTS
+                        	    34: 
+                        	    35: StartupMessage:
+01:F024 0C              	    36: 	.byte	$0C,"Hello, World!",$0D,$0A,$00
+01:F025 48656C6C6F2C2057
+01:F02D 6F726C6421
+01:F032 0D
+01:F033 0A
+01:F034 00
+                        	    37: 
+                        	    38:     .org    $FFFA                       ; ---VECTORS---
+02:FFFA 00F0            	    39:     .word   Reset                       ; NMI vector
+02:FFFC 00F0            	    40:     .word   Reset                       ; RESET vector
+02:FFFE 0000            	    41:     .word   $0000                       ; IRQ vector
+                        	    42: 
 
 
 Symbols by name:
-start                            A:1000
+ACIA                             E:FF70
+ACIAControl                      E:FF70
+ACIAData                         E:FF71
+ACIAStatus                       E:FF70
+MONCOUT                          A:F015
+Reset                            A:F000
+SerialOutWait                    A:F016
+ShowStartMsg                     A:F00A
+Start                            A:F008
+StartupMessage                   A:F024
 
 Symbols by value:
-1000 start
+F000 Reset
+F008 Start
+F00A ShowStartMsg
+F015 MONCOUT
+F016 SerialOutWait
+F024 StartupMessage
+FF70 ACIA
+FF70 ACIAControl
+FF70 ACIAStatus
+FF71 ACIAData

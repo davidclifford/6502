@@ -1,0 +1,61 @@
+Sections:
+00: "org0001:1000" (1000-102D)
+
+
+Source: "Fast\hello.s"
+                        	     1: ACIA := $FF70
+                        	     2: ACIAControl := ACIA+0
+                        	     3: ACIAStatus := ACIA+0
+                        	     4: ACIAData := ACIA+1
+                        	     5: 
+                        	     6:     .org $1000
+                        	     7: Start:
+                        	     8: ; Display startup message
+00:1000 A000            	     9: 	LDY #0
+                        	    10: ShowStartMsg:
+00:1002 B91C10          	    11: 	LDA	StartupMessage,Y
+00:1005 F0F9            	    12: 	BEQ Start
+00:1007 200D10          	    13: 	JSR	MONCOUT
+00:100A C8              	    14: 	INY
+00:100B 80F5            	    15: 	BRA	ShowStartMsg
+                        	    16: 
+                        	    17: MONCOUT:
+00:100D 48              	    18: 	PHA
+                        	    19: SerialOutWait:
+00:100E AD70FF          	    20: 	LDA	ACIAStatus
+00:1011 2902            	    21: 	AND	#2
+00:1013 C902            	    22: 	CMP	#2
+00:1015 D0F7            	    23: 	BNE	SerialOutWait
+00:1017 68              	    24: 	PLA
+00:1018 8D71FF          	    25: 	STA	ACIAData
+00:101B 60              	    26: 	RTS
+                        	    27: 
+                        	    28: StartupMessage:
+00:101C 0C              	    29: 	.byte	$0C,"Hello, World!",$0D,$0A,$00
+00:101D 48656C6C6F2C2057
+00:1025 6F726C6421
+00:102A 0D
+00:102B 0A
+00:102C 00
+                        	    30: 
+
+
+Symbols by name:
+ACIA                             E:FF70
+ACIAData                         E:FF71
+ACIAStatus                       E:FF70
+MONCOUT                          A:100D
+SerialOutWait                    A:100E
+ShowStartMsg                     A:1002
+Start                            A:1000
+StartupMessage                   A:101C
+
+Symbols by value:
+1000 Start
+1002 ShowStartMsg
+100D MONCOUT
+100E SerialOutWait
+101C StartupMessage
+FF70 ACIAStatus
+FF70 ACIA
+FF71 ACIAData

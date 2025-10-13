@@ -1,7 +1,5 @@
     ; Mandelbrot using Matt Heffernan's algorithm
-    .org $1000
-
-IO_ECHO = $C103
+    .org $7000
 
     ; Start
     lda #10
@@ -28,5 +26,5 @@ loopx:
     jsr IO_ECHO
     rts
 
-;    .include io.s
+    .include io.s
     .include mandel.s
