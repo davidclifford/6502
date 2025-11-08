@@ -1,9 +1,9 @@
 Sections:
 00: "org0001:fc0" (FC0-FE2)
-01: "org0002:1000" (1000-11ED)
+01: "org0002:1000" (1000-11D9)
 
 
-Source: ".\Fast\mandel2.s"
+Source: ".\Fast\mandel-bench.s"
                         	     1: ; Written By George Foot, modified by David Clifford Oct 2025
                         	     2: ; 6502 assembly language Mandelbrot Set plotter
                         	     3: ;
@@ -51,37 +51,37 @@ Source: ".\Fast\mandel2.s"
                         	    41: 
                         	    42: ; Dimensions.  The maximums aren't actually used.
                         	    43: 
-                        	    44: YMIN = $fec0  ; -1.25        11111110 11000000
-                        	    45: YMAX = $0140  ;  1.25        00000001 01000000
-                        	    46: YSTEP = $0008 ;  0.03125     00000000 00001000
-                        	    47: XMIN = $fe74  ; -1.546875    11111110 01110100
-                        	    48: XMAX = $0090  ;  0.5625      00000000 10010000
-                        	    49: XSTEP = $0004 ;  0.015625    00000000 00000100
+                        	    44: XMIN = $FE00  ; -2
+                        	    45: XMAX = $0100  ; 1
+                        	    46: XSTEP = $0018 ; 0.09375
+                        	    47: YMIN = $FF00  ; -1
+                        	    48: YMAX = $0100  ; 1
+                        	    49: YSTEP = $0018 ; 0.09375
                         	    50: 
                         	    51: ; Width and height of region to display
                         	    52: 
-                        	    53: XCOUNT = 134
-                        	    54: YCOUNT = 80
+                        	    53: XCOUNT = 32
+                        	    54: YCOUNT = 24
                         	    55: 
                         	    56: 	.org $1000
                         	    57: start:
-01:1000 A9C0            	    58: 	lda #<YMIN
+01:1000 A900            	    58: 	lda #<YMIN
 01:1002 852C            	    59:     sta zp_y
-01:1004 A9FE            	    60: 	lda #>YMIN
+01:1004 A9FF            	    60: 	lda #>YMIN
 01:1006 852D            	    61:     sta zp_y+1
-01:1008 A950            	    62: 	lda #YCOUNT
+01:1008 A918            	    62: 	lda #YCOUNT
 01:100A 853A            	    63:     sta zp_ycount
                         	    64: 
                         	    65: yloop:
-01:100C A974            	    66: 	lda #<XMIN
+01:100C A900            	    66: 	lda #<XMIN
 01:100E 852A            	    67:     sta zp_x
 01:1010 A9FE            	    68: 	lda #>XMIN
 01:1012 852B            	    69:     sta zp_x+1
-01:1014 A986            	    70: 	lda #XCOUNT
+01:1014 A920            	    70: 	lda #XCOUNT
 01:1016 8539            	    71:     sta zp_xcount
                         	    72: 
 01:1018 A90A            	    73: 	lda #10
-01:101A 207211          	    74: 	jsr IO_ECHO
+01:101A 207511          	    74: 	jsr IO_ECHO
                         	    75: 
                         	    76: xloop:
 01:101D A52A            	    77: 	lda zp_x
@@ -316,41 +316,42 @@ Source: ".\Fast\mandel2.s"
                         	   306: iterloopend:
 01:113C A638            	   307: 	ldx zp_iter
 01:113E BDC00F          	   308:     lda chars,x
-01:1141 207211          	   309:     jsr IO_ECHO
-                        	   310: 
-                        	   311: xloopnext:
-01:1144 18              	   312: 	clc
-01:1145 A52A            	   313: 	lda zp_x
-01:1147 6904            	   314:     adc #<XSTEP
-01:1149 852A            	   315:     sta zp_x
-01:114B A52B            	   316: 	lda zp_x+1
-01:114D 6900            	   317:     adc #>XSTEP
-01:114F 852B            	   318:     sta zp_x+1
-                        	   319: 
-01:1151 C639            	   320: 	dec zp_xcount
-01:1153 F003            	   321:     beq xloopend
-01:1155 4C1D10          	   322: 	jmp xloop
-                        	   323: xloopend:
-                        	   324: 
-                        	   325: yloopnext:
-01:1158 18              	   326: 	clc
-01:1159 A52C            	   327: 	lda zp_y
-01:115B 6908            	   328:     adc #<YSTEP
-01:115D 852C            	   329:     sta zp_y
-01:115F A52D            	   330: 	lda zp_y+1
-01:1161 6900            	   331:     adc #>YSTEP
-01:1163 852D            	   332:     sta zp_y+1
-                        	   333: 
-01:1165 C63A            	   334: 	dec zp_ycount
-01:1167 F003            	   335:     beq stop
-01:1169 4C0C10          	   336: 	jmp yloop
-                        	   337: 
-                        	   338: stop:
-01:116C A90A            	   339: 	lda #10
-01:116E 207211          	   340: 	jsr IO_ECHO
-01:1171 60              	   341: 	rts
-                        	   342: 
-                        	   343: 	.include io.s
+01:1141 207511          	   309:     jsr IO_ECHO
+01:1144 207511          	   310:     jsr IO_ECHO
+                        	   311: 
+                        	   312: xloopnext:
+01:1147 18              	   313: 	clc
+01:1148 A52A            	   314: 	lda zp_x
+01:114A 6918            	   315:     adc #<XSTEP
+01:114C 852A            	   316:     sta zp_x
+01:114E A52B            	   317: 	lda zp_x+1
+01:1150 6900            	   318:     adc #>XSTEP
+01:1152 852B            	   319:     sta zp_x+1
+                        	   320: 
+01:1154 C639            	   321: 	dec zp_xcount
+01:1156 F003            	   322:     beq xloopend
+01:1158 4C1D10          	   323: 	jmp xloop
+                        	   324: xloopend:
+                        	   325: 
+                        	   326: yloopnext:
+01:115B 18              	   327: 	clc
+01:115C A52C            	   328: 	lda zp_y
+01:115E 6918            	   329:     adc #<YSTEP
+01:1160 852C            	   330:     sta zp_y
+01:1162 A52D            	   331: 	lda zp_y+1
+01:1164 6900            	   332:     adc #>YSTEP
+01:1166 852D            	   333:     sta zp_y+1
+                        	   334: 
+01:1168 C63A            	   335: 	dec zp_ycount
+01:116A F003            	   336:     beq stop
+01:116C 4C0C10          	   337: 	jmp yloop
+                        	   338: 
+                        	   339: stop:
+01:116F A90A            	   340: 	lda #10
+01:1171 207511          	   341: 	jsr IO_ECHO
+01:1174 60              	   342: 	rts
+                        	   343: 
+                        	   344: 	.include io.s
 
 Source: "io.s"
                         	     1: ACIA := $FF70
@@ -362,120 +363,103 @@ Source: "io.s"
                         	     7: 
                         	     8: ; Output character in A and return.
                         	     9: IO_ECHO:
-01:1172 48              	    10: 	PHA
+01:1175 48              	    10: 	PHA
                         	    11: SerialOutWait:
-01:1173 AD70FF          	    12: 	LDA	ACIAStatus
-01:1176 2902            	    13: 	AND	#2
-01:1178 C902            	    14: 	CMP	#2
-01:117A D0F7            	    15: 	BNE	SerialOutWait
-01:117C 68              	    16: 	PLA
-01:117D 8D71FF          	    17: 	STA	ACIAData
-01:1180 60              	    18: 	RTS
+01:1176 AD70FF          	    12: 	LDA	ACIAStatus
+01:1179 2902            	    13: 	AND	#2
+01:117B C902            	    14: 	CMP	#2
+01:117D D0F7            	    15: 	BNE	SerialOutWait
+01:117F 68              	    16: 	PLA
+01:1180 8D71FF          	    17: 	STA	ACIAData
+01:1183 60              	    18: 	RTS
                         	    19: 
                         	    20: IO_IMM:
-01:1181 48              	    21: 	pha
-01:1182 DA              	    22:     phx
-01:1183 5A              	    23:     phy
+01:1184 48              	    21: 	pha
+01:1185 DA              	    22:     phx
+01:1186 5A              	    23:     phy
                         	    24: 
-01:1184 BA              	    25: 	tsx
-01:1185 18              	    26: 	clc
-01:1186 BD0401          	    27: 	lda $0104,x
-01:1189 6901            	    28:     adc #1
-01:118B 8580            	    29:     sta printptr
-01:118D BD0501          	    30: 	lda $0105,x
-01:1190 6900            	    31:     adc #0
-01:1192 8581            	    32:     sta printptr+1
+01:1187 BA              	    25: 	tsx
+01:1188 18              	    26: 	clc
+01:1189 BD0401          	    27: 	lda $0104,x
+01:118C 6901            	    28:     adc #1
+01:118E 8580            	    29:     sta printptr
+01:1190 BD0501          	    30: 	lda $0105,x
+01:1193 6900            	    31:     adc #0
+01:1195 8581            	    32:     sta printptr+1
                         	    33: 
-01:1194 20A511          	    34: 	jsr printmsgloop
+01:1197 20A811          	    34: 	jsr printmsgloop
                         	    35: 
-01:1197 A580            	    36: 	lda printptr
-01:1199 9D0401          	    37:     sta $0104,x
-01:119C A581            	    38: 	lda printptr+1
-01:119E 9D0501          	    39:     sta $0105,x
+01:119A A580            	    36: 	lda printptr
+01:119C 9D0401          	    37:     sta $0104,x
+01:119F A581            	    38: 	lda printptr+1
+01:11A1 9D0501          	    39:     sta $0105,x
                         	    40: 
-01:11A1 7A              	    41: 	ply
-01:11A2 FA              	    42:     plx
-01:11A3 68              	    43:     pla
-01:11A4 60              	    44: 	rts
+01:11A4 7A              	    41: 	ply
+01:11A5 FA              	    42:     plx
+01:11A6 68              	    43:     pla
+01:11A7 60              	    44: 	rts
                         	    45: 
                         	    46: printmsgloop:
-01:11A5 A000            	    47: 	ldy #0
-01:11A7 B180            	    48: 	lda (printptr),y
-01:11A9 F00B            	    49: 	beq endprintmsgloop
-01:11AB 207211          	    50: 	jsr IO_ECHO
-01:11AE E680            	    51: 	inc printptr
-01:11B0 D0F3            	    52: 	bne printmsgloop
-01:11B2 E681            	    53: 	inc printptr+1
-01:11B4 80EF            	    54: 	bra printmsgloop
+01:11A8 A000            	    47: 	ldy #0
+01:11AA B180            	    48: 	lda (printptr),y
+01:11AC F00B            	    49: 	beq endprintmsgloop
+01:11AE 207511          	    50: 	jsr IO_ECHO
+01:11B1 E680            	    51: 	inc printptr
+01:11B3 D0F3            	    52: 	bne printmsgloop
+01:11B5 E681            	    53: 	inc printptr+1
+01:11B7 80EF            	    54: 	bra printmsgloop
                         	    55: 
                         	    56: endprintmsgloop:
-01:11B6 60              	    57: 	rts
+01:11B9 60              	    57: 	rts
                         	    58: 
                         	    59: 
                         	    60: ; Wait for key and return code in A
                         	    61: IO_KEY:
-01:11B7 AD70FF          	    62:     LDA	    ACIAStatus
-01:11BA 2901            	    63:     AND	    #1
-01:11BC C901            	    64:     CMP	    #1
-01:11BE D0F7            	    65:     BNE     IO_KEY
-01:11C0 AD71FF          	    66:     LDA	    ACIAData
-01:11C3 60              	    67:     RTS
+01:11BA AD70FF          	    62:     LDA	    ACIAStatus
+01:11BD 2901            	    63:     AND	    #1
+01:11BF C901            	    64:     CMP	    #1
+01:11C1 D0F7            	    65:     BNE     IO_KEY
+01:11C3 AD71FF          	    66:     LDA	    ACIAData
+01:11C6 60              	    67:     RTS
                         	    68: 
                         	    69: ; Get next key press in A and set Carry.
                         	    70: ; If no key then clear carry and return zero in A.
                         	    71: IO_INKEY:
-01:11C4 AD70FF          	    72:     LDA	    ACIAStatus
-01:11C7 2901            	    73:     AND	    #1
-01:11C9 C901            	    74:     CMP	    #1
-01:11CB D005            	    75:     BNE     NoKey
-01:11CD AD71FF          	    76:     LDA	    ACIAData
-01:11D0 38              	    77:     SEC
-01:11D1 60              	    78:     RTS
+01:11C7 AD70FF          	    72:     LDA	    ACIAStatus
+01:11CA 2901            	    73:     AND	    #1
+01:11CC C901            	    74:     CMP	    #1
+01:11CE D005            	    75:     BNE     NoKey
+01:11D0 AD71FF          	    76:     LDA	    ACIAData
+01:11D3 38              	    77:     SEC
+01:11D4 60              	    78:     RTS
                         	    79: NoKey:
-01:11D2 A900            	    80:     LDA     #0
-01:11D4 18              	    81:     CLC
-01:11D5 60              	    82:     RTS
+01:11D5 A900            	    80:     LDA     #0
+01:11D7 18              	    81:     CLC
+01:11D8 60              	    82:     RTS
                         	    83: 
-                        	    84: VGA_CLR:
-01:11D6 A980            	    85: 	lda #$80
-01:11D8 8581            	    86: 	sta printptr+1
-01:11DA 6480            	    87: 	stz printptr
-                        	    88: vga_clr_loop:
-01:11DC A900            	    89: 	lda #0
-01:11DE 9280            	    90: 	sta (printptr)
-01:11E0 E680            	    91: 	inc printptr
-01:11E2 D0F8            	    92: 	bne vga_clr_loop
-01:11E4 E681            	    93: 	inc printptr+1
-01:11E6 A581            	    94: 	lda printptr+1
-01:11E8 C9F8            	    95: 	cmp #248
-01:11EA D0F0            	    96: 	bne vga_clr_loop
-                        	    97: 
-01:11EC 60              	    98: 	rts
-                        	    99: 
 
-Source: ".\Fast\mandel2.s"
-                        	   344: 
+Source: ".\Fast\mandel-bench.s"
                         	   345: 
+                        	   346: 
 
 
 Symbols by name:
 ACIA                             E:FF70
 ACIAData                         E:FF71
 ACIAStatus                       E:FF70
-IO_ECHO                          A:1172
-IO_IMM                           A:1181
-IO_INKEY                         A:11C4
-IO_KEY                           A:11B7
+IO_ECHO                          A:1175
+IO_IMM                           A:1184
+IO_INKEY                         A:11C7
+IO_KEY                           A:11BA
 MAXITER                          E:0022
-NoKey                            A:11D2
-SerialOutWait                    A:1173
-VGA_CLR                          A:11D6
-XCOUNT                           E:0086
-XMIN                             E:FE74
-XSTEP                            E:0004
-YCOUNT                           E:0050
-YMIN                             E:FEC0
-YSTEP                            E:0008
+NoKey                            A:11D5
+SerialOutWait                    A:1176
+XCOUNT                           E:0020
+XMIN                             E:FE00
+XSTEP                            E:0018
+YCOUNT                           E:0018
+YMIN                             E:FF00
+YSTEP                            E:0018
 b_bit_done                       A:10CA
 bitloop_a                        A:1085
 bitloop_b                        A:10B1
@@ -483,21 +467,20 @@ chars                            A:0FC0
 continue1                        A:1051
 continue2                        A:1071
 done                             A:1101
-endprintmsgloop                  A:11B6
+endprintmsgloop                  A:11B9
 iterloop                         A:1031
 iterloopend                      A:113C
 positive1                        A:104B
 positive2                        A:106B
-printmsgloop                     A:11A5
+printmsgloop                     A:11A8
 printptr                         E:0080
 start                            A:1000
-stop                             A:116C
-vga_clr_loop                     A:11DC
+stop                             A:116F
 xloop                            A:101D
-xloopend                         A:1158
-xloopnext                        A:1144
+xloopend                         A:115B
+xloopnext                        A:1147
 yloop                            A:100C
-yloopnext                        A:1158
+yloopnext                        A:115B
 zp_a                             E:0020
 zp_a24                           E:0032
 zp_aa                            E:0024
@@ -515,8 +498,10 @@ zp_y                             E:002C
 zp_ycount                        E:003A
 
 Symbols by value:
-0004 XSTEP
-0008 YSTEP
+0018 YSTEP
+0018 XSTEP
+0018 YCOUNT
+0020 XCOUNT
 0020 zp_a
 0022 zp_b
 0022 MAXITER
@@ -533,9 +518,7 @@ Symbols by value:
 0038 zp_iter
 0039 zp_xcount
 003A zp_ycount
-0050 YCOUNT
 0080 printptr
-0086 XCOUNT
 0FC0 chars
 1000 start
 100C yloop
@@ -550,22 +533,20 @@ Symbols by value:
 10CA b_bit_done
 1101 done
 113C iterloopend
-1144 xloopnext
-1158 yloopnext
-1158 xloopend
-116C stop
-1172 IO_ECHO
-1173 SerialOutWait
-1181 IO_IMM
-11A5 printmsgloop
-11B6 endprintmsgloop
-11B7 IO_KEY
-11C4 IO_INKEY
-11D2 NoKey
-11D6 VGA_CLR
-11DC vga_clr_loop
-FE74 XMIN
-FEC0 YMIN
+1147 xloopnext
+115B yloopnext
+115B xloopend
+116F stop
+1175 IO_ECHO
+1176 SerialOutWait
+1184 IO_IMM
+11A8 printmsgloop
+11B9 endprintmsgloop
+11BA IO_KEY
+11C7 IO_INKEY
+11D5 NoKey
+FE00 XMIN
+FF00 YMIN
 FF70 ACIA
 FF70 ACIAStatus
 FF71 ACIAData

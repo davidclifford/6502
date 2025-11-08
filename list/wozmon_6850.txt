@@ -4,7 +4,7 @@ Sections:
 02: "org0003:fffa" (FFFA-0)
 
 
-Source: "Fast\wozmon_6850.s"
+Source: ".\Fast\wozmon_6850.s"
                         	     1:                 .org $8000
                         	     2:                 .org $F000
                         	     3: 
@@ -30,7 +30,7 @@ Source: "Fast\wozmon_6850.s"
 01:F001 A2FF            	    23:                 LDX     #$FF
 01:F003 9A              	    24:                 TXS
                         	    25: 
-01:F004 A995            	    26:                 LDA 	#$95		; Set ACIA baud rate, word size and Rx interrupt (to control RTS)
+01:F004 A996            	    26:                 LDA 	#$96		; Set ACIA baud rate, word size and Rx interrupt (to control RTS)
 01:F006 8D70FF          	    27:                 STA	    ACIAControl
                         	    28: OS:
 01:F009 A91B            	    29:                 LDA     #$1B           ; Begin with escape.

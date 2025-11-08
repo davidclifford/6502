@@ -1,0 +1,55 @@
+%SIGNAL
+PIN  17 =  A6 
+PIN   9 =  A7 
+PIN   2 =  A8 
+PIN   3 =  A9 
+PIN   4 =  A10 
+PIN   5 =  A11 
+PIN   6 =  A12 
+PIN   7 =  A13 
+PIN   8 =  A14 
+PIN  16 = !ACT 
+PIN   1 =  CLK 
+PIN  19 =  IOWAIT 
+PIN  18 =  IOWAITS 
+PIN  15 = !RAM 
+PIN  12 = !ROM 
+%END
+
+%FIELD
+FIELD ADDR = A14,A13,A12,A11,A10,A9,A8,A7,A6
+%END
+
+%EQUATION
+ACT.d  =>
+    ACT & IOWAITS
+
+IOWAITS.d  =>
+    ACT & IOWAIT & !IOWAITS
+
+RAM.d  =>
+    !A14 & ACT & IOWAITS
+
+ROM.d  =>
+    !IOWAITS
+  # !ACT
+  # !A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14
+  # !A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14
+
+addr_is_mmio =>
+    !A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14
+  # !A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14
+
+addr_is_ram =>
+    !A14
+
+next_is_active =>
+    !ACT & IOWAITS
+
+A6.oe  =>
+    0 
+
+IOWAIT.oe  =>
+    0 
+
+%END

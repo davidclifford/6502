@@ -1,5 +1,4 @@
-                .org $8000
-                .org $F000
+                .org $7000
 
 KEYPRESS = $82                      ; Last key pressed
 XAML  = $84                         ; Last "opened" location Low
@@ -36,7 +35,7 @@ NOTCR:
                 BPL     NEXTCHAR                ; Auto ESC if line longer than 127.
 
 ESCAPE:
-                LDA     #'>'                    ; "/".
+                LDA     #'!'                    ; "/".
                 JSR     ECHO                    ; Output it.
 
 GETLINE:
@@ -200,8 +199,3 @@ SerialOutWait:
                 PLA
                 STA	ACIAData
                 RTS
-
-                .org    $FFFA                       ; ---VECTORS---
-                .word   RESET                       ; NMI vector
-                .word   RESET                       ; RESET vector
-                .word   $0000                       ; IRQ vector

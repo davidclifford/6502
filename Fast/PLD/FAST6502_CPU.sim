@@ -1,0 +1,47 @@
+%SIGNAL
+PIN   3 =  A15 
+PIN   1 =  CLK 
+PIN  14 =  CLRIOWAIT 
+PIN   2 =  ICLK 
+PIN  15 = !IORD 
+PIN   5 = !IOREADY 
+PIN  19 =  IOWAIT 
+PIN  13 =  JKCLK 
+PIN  18 =  PHI2 
+PIN  16 = !RAMOE 
+PIN  17 = !RAMWE 
+PIN   4 =  RWB 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+CLRIOWAIT.d  =>
+    IOREADY & IOWAIT
+
+IORD =>
+    A15 & RWB
+
+IOWAIT.d  =>
+    A15 & !IOWAIT
+  # A15 & !CLRIOWAIT
+
+JCLK =>
+    ICLK
+
+PHI2 =>
+    !CLRIOWAIT & !ICLK
+  # !CLRIOWAIT & IOWAIT
+
+RAMOE =>
+    !A15 & RWB
+
+RAMWE =>
+    !A15 & PHI2 & !RWB
+
+intphi2 =>
+    !CLRIOWAIT & !ICLK
+  # !CLRIOWAIT & IOWAIT
+
+%END

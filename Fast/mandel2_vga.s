@@ -14,11 +14,9 @@
 
 ; Takes 5 seconds @32MHz
 
-	.org $0FC0
+	.org $1FC0
 
-chars:
-	.byte " WM@#BXFGODC$&%*=FCODC$&%*=+~-;:,."
-MAXITER = *-chars
+MAXITER = 32
 
 zp_a = $20
 zp_b = $22
@@ -38,29 +36,34 @@ zp_iter = $38
 zp_xcount = $39
 zp_ycount = $3a
 
+vga_ptr = $3c
 
 ; Dimensions.  The maximums aren't actually used.
 
-YMIN = $fec0  ; -1.25        11111110 11000000
+YMIN = $fe98  ; -1.25        11111110 11000000
 YMAX = $0140  ;  1.25        00000001 01000000
-YSTEP = $0008 ;  0.03125     00000000 00001000
-XMIN = $fe74  ; -1.546875    11111110 01110100
+YSTEP = $0006 ;  0.03125     00000000 00001000
+XMIN = $fe40  ; -1.546875    11111110 01110100
 XMAX = $0090  ;  0.5625      00000000 10010000
 XSTEP = $0004 ;  0.015625    00000000 00000100
 
 ; Width and height of region to display
 
-XCOUNT = 134
-YCOUNT = 80
+XCOUNT = 160
+YCOUNT = 120
 
-	.org $1000
+	.org $2000
 start:
+    jsr VGA_CLR
 	lda #<YMIN
     sta zp_y
 	lda #>YMIN
     sta zp_y+1
 	lda #YCOUNT
     sta zp_ycount
+
+    lda #$80
+    sta vga_ptr+1
 
 yloop:
 	lda #<XMIN
@@ -70,8 +73,8 @@ yloop:
 	lda #XCOUNT
     sta zp_xcount
 
-	lda #10
-	jsr IO_ECHO
+    ; Reset x-coord to zero
+    stz vga_ptr
 
 xloop:
 	lda zp_x
@@ -304,9 +307,8 @@ done:
 	jmp iterloop
 
 iterloopend:
-	ldx zp_iter
-    lda chars,x
-    jsr IO_ECHO
+    lda zp_iter
+    sta (vga_ptr)
 
 xloopnext:
 	clc
@@ -319,6 +321,9 @@ xloopnext:
 
 	dec zp_xcount
     beq xloopend
+
+    inc vga_ptr
+
 	jmp xloop
 xloopend:
 
@@ -333,12 +338,12 @@ yloopnext:
 
 	dec zp_ycount
     beq stop
+
+    inc vga_ptr+1
+
 	jmp yloop
 
 stop:
-	lda #10
-	jsr IO_ECHO
 	rts
 
 	.include io.s
-
