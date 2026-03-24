@@ -8,7 +8,7 @@ import sys
 import pygame
 from pygame import gfxdraw
 
-filename = 'finch'
+filename = 'colours'
 
 
 def plot(x, y, r, g, b):
@@ -27,9 +27,13 @@ pixels = image.load()
 
 hex_file = open(filename+'.hex', 'w')
 
+hex_file.write('FF00:00\n')
+
 for y in range(120):
+    if y == 64:
+        hex_file.write('FF00:FF\n')
     for x1 in range(5):
-        hex_file.write(f'{(y*256+x1*32)+32768:04X}:')
+        hex_file.write(f'{((y%64)*256+x1*32)+32768:04X}:')
         for x2 in range(32):
             x = x1*32 + x2
             if x < 160:
@@ -42,6 +46,7 @@ for y in range(120):
                 plot(x, y, red, grn, blu)
         hex_file.write('\n')
     pygame.display.update()
+
 
 hex_file.close()
 

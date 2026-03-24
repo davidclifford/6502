@@ -3,6 +3,8 @@ ACIAControl := ACIA+0
 ACIAStatus := ACIA+0
 ACIAData := ACIA+1
 
+CTRL := $FF00
+
 printptr = $80
 
 ; Output character in A and return.
@@ -82,17 +84,34 @@ NoKey:
     RTS
 
 VGA_CLR:
+	stz CTRL
 	lda #$80
 	sta printptr+1
 	stz printptr
-vga_clr_loop:
+
+vga_clr_loop1:
+	lda #$AA
+	sta (printptr)
+	inc printptr
+	bne vga_clr_loop1
+	inc printptr+1
+	lda printptr+1
+	cmp #$C0
+	bne vga_clr_loop1
+
+	lda #$FF
+	sta CTRL
+	lda #$80
+	sta printptr+1
+	stz printptr
+vga_clr_loop2:
 	lda #0
 	sta (printptr)
 	inc printptr
-	bne vga_clr_loop
+	bne vga_clr_loop2
 	inc printptr+1
 	lda printptr+1
-	cmp #248
-	bne vga_clr_loop
+	cmp #$C0
+	bne vga_clr_loop2
 
 	rts

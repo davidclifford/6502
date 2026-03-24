@@ -1,6 +1,6 @@
 Sections:
 00: "org0001:1fc0" (1FC0-1FC0)
-01: "org0002:2000" (2000-21EC)
+01: "org0002:2000" (2000-221C)
 
 
 Source: ".\Fast\mandel2_vga.s"
@@ -22,7 +22,7 @@ Source: ".\Fast\mandel2_vga.s"
                         	    16: 
                         	    17: 	.org $1FC0
                         	    18: 
-                        	    19: MAXITER = 32
+                        	    19: MAXITER = 34
                         	    20: 
                         	    21: zp_a = $20
                         	    22: zp_b = $22
@@ -60,7 +60,7 @@ Source: ".\Fast\mandel2_vga.s"
                         	    54: 
                         	    55: 	.org $2000
                         	    56: start:
-01:2000 20D521          	    57:     jsr VGA_CLR
+01:2000 20E721          	    57:     jsr VGA_CLR
 01:2003 A998            	    58: 	lda #<YMIN
 01:2005 852C            	    59:     sta zp_y
 01:2007 A9FE            	    60: 	lda #>YMIN
@@ -68,291 +68,299 @@ Source: ".\Fast\mandel2_vga.s"
 01:200B A978            	    62: 	lda #YCOUNT
 01:200D 853A            	    63:     sta zp_ycount
                         	    64: 
-01:200F A980            	    65:     lda #$80
-01:2011 853D            	    66:     sta vga_ptr+1
-                        	    67: 
-                        	    68: yloop:
-01:2013 A940            	    69: 	lda #<XMIN
-01:2015 852A            	    70:     sta zp_x
-01:2017 A9FE            	    71: 	lda #>XMIN
-01:2019 852B            	    72:     sta zp_x+1
-01:201B A9A0            	    73: 	lda #XCOUNT
-01:201D 8539            	    74:     sta zp_xcount
-                        	    75: 
-                        	    76:     ; Reset x-coord to zero
-01:201F 643C            	    77:     stz vga_ptr
-                        	    78: 
-                        	    79: xloop:
-01:2021 A52A            	    80: 	lda zp_x
-01:2023 8520            	    81:     sta zp_a
-01:2025 A52B            	    82: 	lda zp_x+1
-01:2027 8521            	    83:     sta zp_a+1
-                        	    84: 
-01:2029 A52C            	    85: 	lda zp_y
-01:202B 8522            	    86:     sta zp_b
-01:202D A52D            	    87: 	lda zp_y+1
-01:202F 8523            	    88:     sta zp_b+1
-                        	    89: 
-01:2031 A220            	    90: 	ldx #MAXITER
-01:2033 8638            	    91: 	stx zp_iter
-                        	    92: 
-                        	    93: iterloop:
-                        	    94: 
-                        	    95: 	; Calculate aa = a*a, bb = b*b, ab = a*b
-                        	    96: 	;
-                        	    97: 	; We'll compute a*b into ab and copy it back to b afterwards
-                        	    98: 	;
-                        	    99: 	; We need 24-bit copies of a and b, and a byte of less significant bits for each result
-                        	   100: 	;
-                        	   101: 	; If any of these ever go >5 then we could abort as the overall calculation will then be out of range anyway
-                        	   102: 	;
-                        	   103: 	; If one but not both are negative then b should be negative at the end; but in general the calculation is
-                        	   104: 	; done on absolute values
-01:2035 A000            	   105: 	ldy #0 ; negative flag is bit 0
-                        	   106: 
-01:2037 A521            	   107: 	lda zp_a+1
-01:2039 1014            	   108:     bpl positive1
-                        	   109: 
-01:203B C8              	   110: 	iny ; flip sign
-01:203C 38              	   111: 	sec
-01:203D A900            	   112: 	lda #0
-01:203F E520            	   113:     sbc zp_a
-01:2041 8520            	   114:     sta zp_a
-01:2043 8532            	   115:     sta zp_a24
-01:2045 A900            	   116: 	lda #0
-01:2047 E521            	   117:     sbc zp_a+1
-01:2049 8521            	   118:     sta zp_a+1
-01:204B 8533            	   119:     sta zp_a24+1
-01:204D 8006            	   120: 	bra continue1
-                        	   121: 
-                        	   122: positive1:
-01:204F 8533            	   123: 	sta zp_a24+1
-01:2051 A520            	   124: 	lda zp_a
-01:2053 8532            	   125:     sta zp_a24
-                        	   126: 
-                        	   127: continue1:
-01:2055 6434            	   128: 	stz zp_a24+2
-                        	   129: 
-01:2057 A523            	   130: 	lda zp_b+1
-01:2059 1014            	   131:     bpl positive2
-                        	   132: 
-01:205B C8              	   133: 	iny ; flip sign
-01:205C 38              	   134: 	sec
-01:205D A900            	   135: 	lda #0
-01:205F E522            	   136:     sbc zp_b
-01:2061 8522            	   137:     sta zp_b
-01:2063 8535            	   138:     sta zp_b24
-01:2065 A900            	   139: 	lda #0
-01:2067 E523            	   140:     sbc zp_b+1
-01:2069 8523            	   141:     sta zp_b+1
-01:206B 8536            	   142:     sta zp_b24+1
-01:206D 8006            	   143: 	bra continue2
-                        	   144: 
-                        	   145: positive2:
-01:206F 8536            	   146: 	sta zp_b24+1
-01:2071 A522            	   147: 	lda zp_b
-01:2073 8535            	   148:     sta zp_b24
-                        	   149: 
-                        	   150: continue2:
-01:2075 6437            	   151: 	stz zp_b24+2
-                        	   152: 
-01:2077 642E            	   153: 	stz zp_aasub
-01:2079 6424            	   154:     stz zp_aa
-01:207B 6425            	   155:     stz zp_aa+1
-01:207D 642F            	   156: 	stz zp_bbsub
-01:207F 6426            	   157:     stz zp_bb
-01:2081 6427            	   158:     stz zp_bb+1
-01:2083 6431            	   159: 	stz zp_absub
-01:2085 6428            	   160:     stz zp_ab
-01:2087 6429            	   161:     stz zp_ab+1
-                        	   162: 
-                        	   163: bitloop_a:
-                        	   164: 	; First deal with zp_a - shift right, see if the bit was set
-01:2089 4621            	   165: 	lsr zp_a+1
-01:208B 6620            	   166:     ror zp_a
-01:208D 9026            	   167:     bcc bitloop_b
-                        	   168: 
-                        	   169: 	; Add a24 to aa
-01:208F 18              	   170: 	clc
-01:2090 A52E            	   171: 	lda zp_aasub
-01:2092 6532            	   172:     adc zp_a24
-01:2094 852E            	   173:     sta zp_aasub
-01:2096 A524            	   174: 	lda zp_aa
-01:2098 6533            	   175:     adc zp_a24+1
-01:209A 8524            	   176:     sta zp_aa
-01:209C A525            	   177: 	lda zp_aa+1
-01:209E 6534            	   178:     adc zp_a24+2
-01:20A0 8525            	   179:     sta zp_aa+1
-                        	   180: 	;bcs overflow
-                        	   181: 
-                        	   182: 	; Add b24 to ab
-01:20A2 18              	   183: 	clc
-01:20A3 A531            	   184: 	lda zp_absub
-01:20A5 6535            	   185:     adc zp_b24
-01:20A7 8531            	   186:     sta zp_absub
-01:20A9 A528            	   187: 	lda zp_ab
-01:20AB 6536            	   188:     adc zp_b24+1
-01:20AD 8528            	   189:     sta zp_ab
-01:20AF A529            	   190: 	lda zp_ab+1
-01:20B1 6537            	   191:     adc zp_b24+2
-01:20B3 8529            	   192:     sta zp_ab+1
-                        	   193: 	;bcs overflow
-                        	   194: 
-                        	   195: bitloop_b:
-                        	   196: 	; Now deal with zp_b - shift right, see if the bit was set
-01:20B5 4623            	   197: 	lsr zp_b+1
-01:20B7 6622            	   198:     ror zp_b
-01:20B9 9013            	   199:     bcc b_bit_done
-                        	   200: 
-                        	   201: 	; Add b24 to bb
-01:20BB 18              	   202: 	clc
-01:20BC A52F            	   203: 	lda zp_bbsub
-01:20BE 6535            	   204:     adc zp_b24
-01:20C0 852F            	   205:     sta zp_bbsub
-01:20C2 A526            	   206: 	lda zp_bb
-01:20C4 6536            	   207:     adc zp_b24+1
-01:20C6 8526            	   208:     sta zp_bb
-01:20C8 A527            	   209: 	lda zp_bb+1
-01:20CA 6537            	   210:     adc zp_b24+2
-01:20CC 8527            	   211:     sta zp_bb+1
-                        	   212: 	;bcs overflow
-                        	   213: 
-                        	   214: b_bit_done:
-                        	   215: 	; Shift a24 and b24 left
-01:20CE 0632            	   216: 	asl zp_a24
-01:20D0 2633            	   217:     rol zp_a24+1
-01:20D2 2634            	   218:     rol zp_a24+2
-01:20D4 0635            	   219: 	asl zp_b24
-01:20D6 2636            	   220:     rol zp_b24+1
-01:20D8 2637            	   221:     rol zp_b24+2
-                        	   222: 
-                        	   223: 	; If zp_a still has set bits, loop all the way back
-01:20DA A520            	   224: 	lda zp_a
-01:20DC 0521            	   225:     ora zp_a+1
-01:20DE D0A9            	   226:     bne bitloop_a
-                        	   227: 
-                        	   228: 	; Otherwise if zp_b has set bits, loop just back to there
-01:20E0 A522            	   229: 	lda zp_b
-01:20E2 0523            	   230:     ora zp_b+1
-01:20E4 D0CF            	   231:     bne bitloop_b
-                        	   232: 
-                        	   233: 	; Else we're done with the main multiplications
-                        	   234: 
-                        	   235: 	; Double ab into b
-01:20E6 A531            	   236: 	lda zp_absub
-01:20E8 0A              	   237:     asl
-01:20E9 A528            	   238: 	lda zp_ab
-01:20EB 2A              	   239:     rol
-01:20EC 8522            	   240:     sta zp_b
-01:20EE A529            	   241: 	lda zp_ab+1
-01:20F0 2A              	   242:     rol
-01:20F1 8523            	   243:     sta zp_b+1
-                        	   244: 	;bcs overflow
-                        	   245:     ;bmi overflow
-                        	   246: 
-                        	   247: 	; Correct the sign of b if it was meant to be negative
-01:20F3 98              	   248: 	tya
-01:20F4 2901            	   249:     and #1
-01:20F6 F00D            	   250:     beq done
-01:20F8 38              	   251: 	sec
-01:20F9 A900            	   252: 	lda #0
-01:20FB E522            	   253:     sbc zp_b
-01:20FD 8522            	   254:     sta zp_b
-01:20FF A900            	   255: 	lda #0
-01:2101 E523            	   256:     sbc zp_b+1
-01:2103 8523            	   257:     sta zp_b+1
-                        	   258: ;	bra done
-                        	   259: ;
-                        	   260: ;overflow:
-                        	   261: ;	bra iterloopend
-                        	   262: 
-                        	   263: done:
-                        	   264: 	; Now aa = a*a, bb = b*b, b = 2*a*b
-                        	   265: 	;
-                        	   266: 	; We could check aa and bb against 5 here but probably not necessary.
-                        	   267: 	; No need to check b as aa+bb>b
-                        	   268: 
-                        	   269: 	; Check aa+bb against 5
-01:2105 18              	   270: 	clc
-01:2106 A524            	   271: 	lda zp_aa
-01:2108 6526            	   272:     adc zp_bb
-01:210A A525            	   273: 	lda zp_aa+1
-01:210C 6527            	   274:     adc zp_bb+1
-01:210E C905            	   275: 	cmp #5
-01:2110 B02E            	   276:     bcs iterloopend
-                        	   277: 
-                        	   278: 	; a=e-f+c
-01:2112 38              	   279: 	sec
-01:2113 A524            	   280: 	lda zp_aa
-01:2115 E526            	   281:     sbc zp_bb
-01:2117 8520            	   282:     sta zp_a
-01:2119 A525            	   283: 	lda zp_aa+1
-01:211B E527            	   284:     sbc zp_bb+1
-01:211D 8521            	   285:     sta zp_a+1
-                        	   286: 
-01:211F 18              	   287: 	clc
-01:2120 A520            	   288: 	lda zp_a
-01:2122 652A            	   289:     adc zp_x
-01:2124 8520            	   290:     sta zp_a
-01:2126 A521            	   291: 	lda zp_a+1
-01:2128 652B            	   292:     adc zp_x+1
-01:212A 8521            	   293:     sta zp_a+1
-                        	   294: 
-                        	   295: 	; b=b+d
-01:212C 18              	   296: 	clc
-01:212D A522            	   297: 	lda zp_b
-01:212F 652C            	   298:     adc zp_y
-01:2131 8522            	   299:     sta zp_b
-01:2133 A523            	   300: 	lda zp_b+1
-01:2135 652D            	   301:     adc zp_y+1
-01:2137 8523            	   302:     sta zp_b+1
-                        	   303: 
-                        	   304: 	; iterate
-01:2139 C638            	   305: 	dec zp_iter
-01:213B F003            	   306:     beq iterloopend
-01:213D 4C3520          	   307: 	jmp iterloop
-                        	   308: 
-                        	   309: iterloopend:
-01:2140 A538            	   310:     lda zp_iter
-01:2142 923C            	   311:     sta (vga_ptr)
-                        	   312: 
-                        	   313: xloopnext:
-01:2144 18              	   314: 	clc
-01:2145 A52A            	   315: 	lda zp_x
-01:2147 6904            	   316:     adc #<XSTEP
-01:2149 852A            	   317:     sta zp_x
-01:214B A52B            	   318: 	lda zp_x+1
-01:214D 6900            	   319:     adc #>XSTEP
-01:214F 852B            	   320:     sta zp_x+1
-                        	   321: 
-01:2151 C639            	   322: 	dec zp_xcount
-01:2153 F005            	   323:     beq xloopend
-                        	   324: 
-01:2155 E63C            	   325:     inc vga_ptr
-                        	   326: 
-01:2157 4C2120          	   327: 	jmp xloop
-                        	   328: xloopend:
-                        	   329: 
-                        	   330: yloopnext:
-01:215A 18              	   331: 	clc
-01:215B A52C            	   332: 	lda zp_y
-01:215D 6906            	   333:     adc #<YSTEP
-01:215F 852C            	   334:     sta zp_y
-01:2161 A52D            	   335: 	lda zp_y+1
-01:2163 6900            	   336:     adc #>YSTEP
-01:2165 852D            	   337:     sta zp_y+1
-                        	   338: 
-01:2167 C63A            	   339: 	dec zp_ycount
-01:2169 F005            	   340:     beq stop
-                        	   341: 
-01:216B E63D            	   342:     inc vga_ptr+1
-                        	   343: 
-01:216D 4C1320          	   344: 	jmp yloop
-                        	   345: 
-                        	   346: stop:
-01:2170 60              	   347: 	rts
-                        	   348: 
-                        	   349: 	.include io.s
+01:200F 9C00FF          	    65:     stz CTRL
+01:2012 A980            	    66:     lda #$80
+01:2014 853D            	    67:     sta vga_ptr+1
+                        	    68: 
+                        	    69: yloop:
+01:2016 A940            	    70: 	lda #<XMIN
+01:2018 852A            	    71:     sta zp_x
+01:201A A9FE            	    72: 	lda #>XMIN
+01:201C 852B            	    73:     sta zp_x+1
+01:201E A9A0            	    74: 	lda #XCOUNT
+01:2020 8539            	    75:     sta zp_xcount
+                        	    76: 
+                        	    77:     ; Reset x-coord to zero
+01:2022 643C            	    78:     stz vga_ptr
+                        	    79: 
+                        	    80: xloop:
+01:2024 A52A            	    81: 	lda zp_x
+01:2026 8520            	    82:     sta zp_a
+01:2028 A52B            	    83: 	lda zp_x+1
+01:202A 8521            	    84:     sta zp_a+1
+                        	    85: 
+01:202C A52C            	    86: 	lda zp_y
+01:202E 8522            	    87:     sta zp_b
+01:2030 A52D            	    88: 	lda zp_y+1
+01:2032 8523            	    89:     sta zp_b+1
+                        	    90: 
+01:2034 A222            	    91: 	ldx #MAXITER
+01:2036 8638            	    92: 	stx zp_iter
+                        	    93: 
+                        	    94: iterloop:
+                        	    95: 
+                        	    96: 	; Calculate aa = a*a, bb = b*b, ab = a*b
+                        	    97: 	;
+                        	    98: 	; We'll compute a*b into ab and copy it back to b afterwards
+                        	    99: 	;
+                        	   100: 	; We need 24-bit copies of a and b, and a byte of less significant bits for each result
+                        	   101: 	;
+                        	   102: 	; If any of these ever go >5 then we could abort as the overall calculation will then be out of range anyway
+                        	   103: 	;
+                        	   104: 	; If one but not both are negative then b should be negative at the end; but in general the calculation is
+                        	   105: 	; done on absolute values
+01:2038 A000            	   106: 	ldy #0 ; negative flag is bit 0
+                        	   107: 
+01:203A A521            	   108: 	lda zp_a+1
+01:203C 1014            	   109:     bpl positive1
+                        	   110: 
+01:203E C8              	   111: 	iny ; flip sign
+01:203F 38              	   112: 	sec
+01:2040 A900            	   113: 	lda #0
+01:2042 E520            	   114:     sbc zp_a
+01:2044 8520            	   115:     sta zp_a
+01:2046 8532            	   116:     sta zp_a24
+01:2048 A900            	   117: 	lda #0
+01:204A E521            	   118:     sbc zp_a+1
+01:204C 8521            	   119:     sta zp_a+1
+01:204E 8533            	   120:     sta zp_a24+1
+01:2050 8006            	   121: 	bra continue1
+                        	   122: 
+                        	   123: positive1:
+01:2052 8533            	   124: 	sta zp_a24+1
+01:2054 A520            	   125: 	lda zp_a
+01:2056 8532            	   126:     sta zp_a24
+                        	   127: 
+                        	   128: continue1:
+01:2058 6434            	   129: 	stz zp_a24+2
+                        	   130: 
+01:205A A523            	   131: 	lda zp_b+1
+01:205C 1014            	   132:     bpl positive2
+                        	   133: 
+01:205E C8              	   134: 	iny ; flip sign
+01:205F 38              	   135: 	sec
+01:2060 A900            	   136: 	lda #0
+01:2062 E522            	   137:     sbc zp_b
+01:2064 8522            	   138:     sta zp_b
+01:2066 8535            	   139:     sta zp_b24
+01:2068 A900            	   140: 	lda #0
+01:206A E523            	   141:     sbc zp_b+1
+01:206C 8523            	   142:     sta zp_b+1
+01:206E 8536            	   143:     sta zp_b24+1
+01:2070 8006            	   144: 	bra continue2
+                        	   145: 
+                        	   146: positive2:
+01:2072 8536            	   147: 	sta zp_b24+1
+01:2074 A522            	   148: 	lda zp_b
+01:2076 8535            	   149:     sta zp_b24
+                        	   150: 
+                        	   151: continue2:
+01:2078 6437            	   152: 	stz zp_b24+2
+                        	   153: 
+01:207A 642E            	   154: 	stz zp_aasub
+01:207C 6424            	   155:     stz zp_aa
+01:207E 6425            	   156:     stz zp_aa+1
+01:2080 642F            	   157: 	stz zp_bbsub
+01:2082 6426            	   158:     stz zp_bb
+01:2084 6427            	   159:     stz zp_bb+1
+01:2086 6431            	   160: 	stz zp_absub
+01:2088 6428            	   161:     stz zp_ab
+01:208A 6429            	   162:     stz zp_ab+1
+                        	   163: 
+                        	   164: bitloop_a:
+                        	   165: 	; First deal with zp_a - shift right, see if the bit was set
+01:208C 4621            	   166: 	lsr zp_a+1
+01:208E 6620            	   167:     ror zp_a
+01:2090 9026            	   168:     bcc bitloop_b
+                        	   169: 
+                        	   170: 	; Add a24 to aa
+01:2092 18              	   171: 	clc
+01:2093 A52E            	   172: 	lda zp_aasub
+01:2095 6532            	   173:     adc zp_a24
+01:2097 852E            	   174:     sta zp_aasub
+01:2099 A524            	   175: 	lda zp_aa
+01:209B 6533            	   176:     adc zp_a24+1
+01:209D 8524            	   177:     sta zp_aa
+01:209F A525            	   178: 	lda zp_aa+1
+01:20A1 6534            	   179:     adc zp_a24+2
+01:20A3 8525            	   180:     sta zp_aa+1
+                        	   181: 	;bcs overflow
+                        	   182: 
+                        	   183: 	; Add b24 to ab
+01:20A5 18              	   184: 	clc
+01:20A6 A531            	   185: 	lda zp_absub
+01:20A8 6535            	   186:     adc zp_b24
+01:20AA 8531            	   187:     sta zp_absub
+01:20AC A528            	   188: 	lda zp_ab
+01:20AE 6536            	   189:     adc zp_b24+1
+01:20B0 8528            	   190:     sta zp_ab
+01:20B2 A529            	   191: 	lda zp_ab+1
+01:20B4 6537            	   192:     adc zp_b24+2
+01:20B6 8529            	   193:     sta zp_ab+1
+                        	   194: 	;bcs overflow
+                        	   195: 
+                        	   196: bitloop_b:
+                        	   197: 	; Now deal with zp_b - shift right, see if the bit was set
+01:20B8 4623            	   198: 	lsr zp_b+1
+01:20BA 6622            	   199:     ror zp_b
+01:20BC 9013            	   200:     bcc b_bit_done
+                        	   201: 
+                        	   202: 	; Add b24 to bb
+01:20BE 18              	   203: 	clc
+01:20BF A52F            	   204: 	lda zp_bbsub
+01:20C1 6535            	   205:     adc zp_b24
+01:20C3 852F            	   206:     sta zp_bbsub
+01:20C5 A526            	   207: 	lda zp_bb
+01:20C7 6536            	   208:     adc zp_b24+1
+01:20C9 8526            	   209:     sta zp_bb
+01:20CB A527            	   210: 	lda zp_bb+1
+01:20CD 6537            	   211:     adc zp_b24+2
+01:20CF 8527            	   212:     sta zp_bb+1
+                        	   213: 	;bcs overflow
+                        	   214: 
+                        	   215: b_bit_done:
+                        	   216: 	; Shift a24 and b24 left
+01:20D1 0632            	   217: 	asl zp_a24
+01:20D3 2633            	   218:     rol zp_a24+1
+01:20D5 2634            	   219:     rol zp_a24+2
+01:20D7 0635            	   220: 	asl zp_b24
+01:20D9 2636            	   221:     rol zp_b24+1
+01:20DB 2637            	   222:     rol zp_b24+2
+                        	   223: 
+                        	   224: 	; If zp_a still has set bits, loop all the way back
+01:20DD A520            	   225: 	lda zp_a
+01:20DF 0521            	   226:     ora zp_a+1
+01:20E1 D0A9            	   227:     bne bitloop_a
+                        	   228: 
+                        	   229: 	; Otherwise if zp_b has set bits, loop just back to there
+01:20E3 A522            	   230: 	lda zp_b
+01:20E5 0523            	   231:     ora zp_b+1
+01:20E7 D0CF            	   232:     bne bitloop_b
+                        	   233: 
+                        	   234: 	; Else we're done with the main multiplications
+                        	   235: 
+                        	   236: 	; Double ab into b
+01:20E9 A531            	   237: 	lda zp_absub
+01:20EB 0A              	   238:     asl
+01:20EC A528            	   239: 	lda zp_ab
+01:20EE 2A              	   240:     rol
+01:20EF 8522            	   241:     sta zp_b
+01:20F1 A529            	   242: 	lda zp_ab+1
+01:20F3 2A              	   243:     rol
+01:20F4 8523            	   244:     sta zp_b+1
+                        	   245: 	;bcs overflow
+                        	   246:     ;bmi overflow
+                        	   247: 
+                        	   248: 	; Correct the sign of b if it was meant to be negative
+01:20F6 98              	   249: 	tya
+01:20F7 2901            	   250:     and #1
+01:20F9 F00D            	   251:     beq done
+01:20FB 38              	   252: 	sec
+01:20FC A900            	   253: 	lda #0
+01:20FE E522            	   254:     sbc zp_b
+01:2100 8522            	   255:     sta zp_b
+01:2102 A900            	   256: 	lda #0
+01:2104 E523            	   257:     sbc zp_b+1
+01:2106 8523            	   258:     sta zp_b+1
+                        	   259: ;	bra done
+                        	   260: ;
+                        	   261: ;overflow:
+                        	   262: ;	bra iterloopend
+                        	   263: 
+                        	   264: done:
+                        	   265: 	; Now aa = a*a, bb = b*b, b = 2*a*b
+                        	   266: 	;
+                        	   267: 	; We could check aa and bb against 5 here but probably not necessary.
+                        	   268: 	; No need to check b as aa+bb>b
+                        	   269: 
+                        	   270: 	; Check aa+bb against 5
+01:2108 18              	   271: 	clc
+01:2109 A524            	   272: 	lda zp_aa
+01:210B 6526            	   273:     adc zp_bb
+01:210D A525            	   274: 	lda zp_aa+1
+01:210F 6527            	   275:     adc zp_bb+1
+01:2111 C905            	   276: 	cmp #5
+01:2113 B02E            	   277:     bcs iterloopend
+                        	   278: 
+                        	   279: 	; a=e-f+c
+01:2115 38              	   280: 	sec
+01:2116 A524            	   281: 	lda zp_aa
+01:2118 E526            	   282:     sbc zp_bb
+01:211A 8520            	   283:     sta zp_a
+01:211C A525            	   284: 	lda zp_aa+1
+01:211E E527            	   285:     sbc zp_bb+1
+01:2120 8521            	   286:     sta zp_a+1
+                        	   287: 
+01:2122 18              	   288: 	clc
+01:2123 A520            	   289: 	lda zp_a
+01:2125 652A            	   290:     adc zp_x
+01:2127 8520            	   291:     sta zp_a
+01:2129 A521            	   292: 	lda zp_a+1
+01:212B 652B            	   293:     adc zp_x+1
+01:212D 8521            	   294:     sta zp_a+1
+                        	   295: 
+                        	   296: 	; b=b+d
+01:212F 18              	   297: 	clc
+01:2130 A522            	   298: 	lda zp_b
+01:2132 652C            	   299:     adc zp_y
+01:2134 8522            	   300:     sta zp_b
+01:2136 A523            	   301: 	lda zp_b+1
+01:2138 652D            	   302:     adc zp_y+1
+01:213A 8523            	   303:     sta zp_b+1
+                        	   304: 
+                        	   305: 	; iterate
+01:213C C638            	   306: 	dec zp_iter
+01:213E F003            	   307:     beq iterloopend
+01:2140 4C3820          	   308: 	jmp iterloop
+                        	   309: 
+                        	   310: iterloopend:
+01:2143 A538            	   311:     lda zp_iter
+01:2145 923C            	   312:     sta (vga_ptr)
+                        	   313: 
+                        	   314: xloopnext:
+01:2147 18              	   315: 	clc
+01:2148 A52A            	   316: 	lda zp_x
+01:214A 6904            	   317:     adc #<XSTEP
+01:214C 852A            	   318:     sta zp_x
+01:214E A52B            	   319: 	lda zp_x+1
+01:2150 6900            	   320:     adc #>XSTEP
+01:2152 852B            	   321:     sta zp_x+1
+                        	   322: 
+01:2154 C639            	   323: 	dec zp_xcount
+01:2156 F005            	   324:     beq xloopend
+                        	   325: 
+01:2158 E63C            	   326:     inc vga_ptr
+                        	   327: 
+01:215A 4C2420          	   328: 	jmp xloop
+                        	   329: xloopend:
+                        	   330: 
+                        	   331: yloopnext:
+01:215D 18              	   332: 	clc
+01:215E A52C            	   333: 	lda zp_y
+01:2160 6906            	   334:     adc #<YSTEP
+01:2162 852C            	   335:     sta zp_y
+01:2164 A52D            	   336: 	lda zp_y+1
+01:2166 6900            	   337:     adc #>YSTEP
+01:2168 852D            	   338:     sta zp_y+1
+                        	   339: 
+01:216A C63A            	   340: 	dec zp_ycount
+01:216C F014            	   341:     beq stop
+                        	   342: 
+01:216E E63D            	   343:     inc vga_ptr+1
+01:2170 A53D            	   344:     lda vga_ptr+1
+01:2172 C9C0            	   345:     cmp #$C0
+01:2174 D009            	   346:     bne yloop_jump
+01:2176 A9FF            	   347:     lda #$FF
+01:2178 8D00FF          	   348:     sta CTRL
+01:217B A980            	   349:     lda #$80
+01:217D 853D            	   350:     sta vga_ptr+1
+                        	   351: yloop_jump:
+01:217F 4C1620          	   352: 	jmp yloop
+                        	   353: 
+                        	   354: stop:
+01:2182 60              	   355: 	rts
+                        	   356: 
+                        	   357: 	.include io.s
 
 Source: "io.s"
                         	     1: ACIA := $FF70
@@ -360,145 +368,167 @@ Source: "io.s"
                         	     3: ACIAStatus := ACIA+0
                         	     4: ACIAData := ACIA+1
                         	     5: 
-                        	     6: printptr = $80
+                        	     6: CTRL := $FF00
                         	     7: 
-                        	     8: ; Output character in A and return.
-                        	     9: IO_ECHO:
-01:2171 48              	    10: 	PHA
-                        	    11: SerialOutWait:
-01:2172 AD70FF          	    12: 	LDA	ACIAStatus
-01:2175 2902            	    13: 	AND	#2
-01:2177 C902            	    14: 	CMP	#2
-01:2179 D0F7            	    15: 	BNE	SerialOutWait
-01:217B 68              	    16: 	PLA
-01:217C 8D71FF          	    17: 	STA	ACIAData
-01:217F 60              	    18: 	RTS
-                        	    19: 
-                        	    20: IO_IMM:
-01:2180 48              	    21: 	pha
-01:2181 DA              	    22:     phx
-01:2182 5A              	    23:     phy
-                        	    24: 
-01:2183 BA              	    25: 	tsx
-01:2184 18              	    26: 	clc
-01:2185 BD0401          	    27: 	lda $0104,x
-01:2188 6901            	    28:     adc #1
-01:218A 8580            	    29:     sta printptr
-01:218C BD0501          	    30: 	lda $0105,x
-01:218F 6900            	    31:     adc #0
-01:2191 8581            	    32:     sta printptr+1
-                        	    33: 
-01:2193 20A421          	    34: 	jsr printmsgloop
+                        	     8: printptr = $80
+                        	     9: 
+                        	    10: ; Output character in A and return.
+                        	    11: IO_ECHO:
+01:2183 48              	    12: 	PHA
+                        	    13: SerialOutWait:
+01:2184 AD70FF          	    14: 	LDA	ACIAStatus
+01:2187 2902            	    15: 	AND	#2
+01:2189 C902            	    16: 	CMP	#2
+01:218B D0F7            	    17: 	BNE	SerialOutWait
+01:218D 68              	    18: 	PLA
+01:218E 8D71FF          	    19: 	STA	ACIAData
+01:2191 60              	    20: 	RTS
+                        	    21: 
+                        	    22: IO_IMM:
+01:2192 48              	    23: 	pha
+01:2193 DA              	    24:     phx
+01:2194 5A              	    25:     phy
+                        	    26: 
+01:2195 BA              	    27: 	tsx
+01:2196 18              	    28: 	clc
+01:2197 BD0401          	    29: 	lda $0104,x
+01:219A 6901            	    30:     adc #1
+01:219C 8580            	    31:     sta printptr
+01:219E BD0501          	    32: 	lda $0105,x
+01:21A1 6900            	    33:     adc #0
+01:21A3 8581            	    34:     sta printptr+1
                         	    35: 
-01:2196 A580            	    36: 	lda printptr
-01:2198 9D0401          	    37:     sta $0104,x
-01:219B A581            	    38: 	lda printptr+1
-01:219D 9D0501          	    39:     sta $0105,x
-                        	    40: 
-01:21A0 7A              	    41: 	ply
-01:21A1 FA              	    42:     plx
-01:21A2 68              	    43:     pla
-01:21A3 60              	    44: 	rts
-                        	    45: 
-                        	    46: printmsgloop:
-01:21A4 A000            	    47: 	ldy #0
-01:21A6 B180            	    48: 	lda (printptr),y
-01:21A8 F00B            	    49: 	beq endprintmsgloop
-01:21AA 207121          	    50: 	jsr IO_ECHO
-01:21AD E680            	    51: 	inc printptr
-01:21AF D0F3            	    52: 	bne printmsgloop
-01:21B1 E681            	    53: 	inc printptr+1
-01:21B3 80EF            	    54: 	bra printmsgloop
-                        	    55: 
-                        	    56: endprintmsgloop:
-01:21B5 60              	    57: 	rts
-                        	    58: 
-                        	    59: 
-                        	    60: ; Wait for key and return code in A
-                        	    61: IO_KEY:
-01:21B6 AD70FF          	    62:     LDA	    ACIAStatus
-01:21B9 2901            	    63:     AND	    #1
-01:21BB C901            	    64:     CMP	    #1
-01:21BD D0F7            	    65:     BNE     IO_KEY
-01:21BF AD71FF          	    66:     LDA	    ACIAData
-01:21C2 60              	    67:     RTS
-                        	    68: 
-                        	    69: ; Get next key press in A and set Carry.
-                        	    70: ; If no key then clear carry and return zero in A.
-                        	    71: IO_INKEY:
-01:21C3 AD70FF          	    72:     LDA	    ACIAStatus
-01:21C6 2901            	    73:     AND	    #1
-01:21C8 C901            	    74:     CMP	    #1
-01:21CA D005            	    75:     BNE     NoKey
-01:21CC AD71FF          	    76:     LDA	    ACIAData
-01:21CF 38              	    77:     SEC
-01:21D0 60              	    78:     RTS
-                        	    79: NoKey:
-01:21D1 A900            	    80:     LDA     #0
-01:21D3 18              	    81:     CLC
-01:21D4 60              	    82:     RTS
-                        	    83: 
-                        	    84: VGA_CLR:
-01:21D5 A980            	    85: 	lda #$80
-01:21D7 8581            	    86: 	sta printptr+1
-01:21D9 6480            	    87: 	stz printptr
-                        	    88: vga_clr_loop:
-01:21DB A900            	    89: 	lda #0
-01:21DD 9280            	    90: 	sta (printptr)
-01:21DF E680            	    91: 	inc printptr
-01:21E1 D0F8            	    92: 	bne vga_clr_loop
-01:21E3 E681            	    93: 	inc printptr+1
-01:21E5 A581            	    94: 	lda printptr+1
-01:21E7 C9F8            	    95: 	cmp #248
-01:21E9 D0F0            	    96: 	bne vga_clr_loop
-                        	    97: 
-01:21EB 60              	    98: 	rts
-                        	    99: 
+01:21A5 20B621          	    36: 	jsr printmsgloop
+                        	    37: 
+01:21A8 A580            	    38: 	lda printptr
+01:21AA 9D0401          	    39:     sta $0104,x
+01:21AD A581            	    40: 	lda printptr+1
+01:21AF 9D0501          	    41:     sta $0105,x
+                        	    42: 
+01:21B2 7A              	    43: 	ply
+01:21B3 FA              	    44:     plx
+01:21B4 68              	    45:     pla
+01:21B5 60              	    46: 	rts
+                        	    47: 
+                        	    48: printmsgloop:
+01:21B6 A000            	    49: 	ldy #0
+01:21B8 B180            	    50: 	lda (printptr),y
+01:21BA F00B            	    51: 	beq endprintmsgloop
+01:21BC 208321          	    52: 	jsr IO_ECHO
+01:21BF E680            	    53: 	inc printptr
+01:21C1 D0F3            	    54: 	bne printmsgloop
+01:21C3 E681            	    55: 	inc printptr+1
+01:21C5 80EF            	    56: 	bra printmsgloop
+                        	    57: 
+                        	    58: endprintmsgloop:
+01:21C7 60              	    59: 	rts
+                        	    60: 
+                        	    61: 
+                        	    62: ; Wait for key and return code in A
+                        	    63: IO_KEY:
+01:21C8 AD70FF          	    64:     LDA	    ACIAStatus
+01:21CB 2901            	    65:     AND	    #1
+01:21CD C901            	    66:     CMP	    #1
+01:21CF D0F7            	    67:     BNE     IO_KEY
+01:21D1 AD71FF          	    68:     LDA	    ACIAData
+01:21D4 60              	    69:     RTS
+                        	    70: 
+                        	    71: ; Get next key press in A and set Carry.
+                        	    72: ; If no key then clear carry and return zero in A.
+                        	    73: IO_INKEY:
+01:21D5 AD70FF          	    74:     LDA	    ACIAStatus
+01:21D8 2901            	    75:     AND	    #1
+01:21DA C901            	    76:     CMP	    #1
+01:21DC D005            	    77:     BNE     NoKey
+01:21DE AD71FF          	    78:     LDA	    ACIAData
+01:21E1 38              	    79:     SEC
+01:21E2 60              	    80:     RTS
+                        	    81: NoKey:
+01:21E3 A900            	    82:     LDA     #0
+01:21E5 18              	    83:     CLC
+01:21E6 60              	    84:     RTS
+                        	    85: 
+                        	    86: VGA_CLR:
+01:21E7 9C00FF          	    87: 	stz CTRL
+01:21EA A980            	    88: 	lda #$80
+01:21EC 8581            	    89: 	sta printptr+1
+01:21EE 6480            	    90: 	stz printptr
+                        	    91: 
+                        	    92: vga_clr_loop1:
+01:21F0 A900            	    93: 	lda #0
+01:21F2 9280            	    94: 	sta (printptr)
+01:21F4 E680            	    95: 	inc printptr
+01:21F6 D0F8            	    96: 	bne vga_clr_loop1
+01:21F8 E681            	    97: 	inc printptr+1
+01:21FA A581            	    98: 	lda printptr+1
+01:21FC C9C0            	    99: 	cmp #$C0
+01:21FE D0F0            	   100: 	bne vga_clr_loop1
+                        	   101: 
+01:2200 A9FF            	   102: 	lda #$FF
+01:2202 8D00FF          	   103: 	sta CTRL
+01:2205 A980            	   104: 	lda #$80
+01:2207 8581            	   105: 	sta printptr+1
+01:2209 6480            	   106: 	stz printptr
+                        	   107: vga_clr_loop2:
+01:220B A900            	   108: 	lda #0
+01:220D 9280            	   109: 	sta (printptr)
+01:220F E680            	   110: 	inc printptr
+01:2211 D0F8            	   111: 	bne vga_clr_loop2
+01:2213 E681            	   112: 	inc printptr+1
+01:2215 A581            	   113: 	lda printptr+1
+01:2217 C9C0            	   114: 	cmp #$C0
+01:2219 D0F0            	   115: 	bne vga_clr_loop2
+                        	   116: 
+01:221B 60              	   117: 	rts
+                        	   118: 
 
 Source: ".\Fast\mandel2_vga.s"
-                        	   350: 
+                        	   358: 
 
 
 Symbols by name:
 ACIA                             E:FF70
 ACIAData                         E:FF71
 ACIAStatus                       E:FF70
-IO_ECHO                          A:2171
-IO_IMM                           A:2180
-IO_INKEY                         A:21C3
-IO_KEY                           A:21B6
-MAXITER                          E:0020
-NoKey                            A:21D1
-SerialOutWait                    A:2172
-VGA_CLR                          A:21D5
+CTRL                             E:FF00
+IO_ECHO                          A:2183
+IO_IMM                           A:2192
+IO_INKEY                         A:21D5
+IO_KEY                           A:21C8
+MAXITER                          E:0022
+NoKey                            A:21E3
+SerialOutWait                    A:2184
+VGA_CLR                          A:21E7
 XCOUNT                           E:00A0
 XMIN                             E:FE40
 XSTEP                            E:0004
 YCOUNT                           E:0078
 YMIN                             E:FE98
 YSTEP                            E:0006
-b_bit_done                       A:20CE
-bitloop_a                        A:2089
-bitloop_b                        A:20B5
-continue1                        A:2055
-continue2                        A:2075
-done                             A:2105
-endprintmsgloop                  A:21B5
-iterloop                         A:2035
-iterloopend                      A:2140
-positive1                        A:204F
-positive2                        A:206F
-printmsgloop                     A:21A4
+b_bit_done                       A:20D1
+bitloop_a                        A:208C
+bitloop_b                        A:20B8
+continue1                        A:2058
+continue2                        A:2078
+done                             A:2108
+endprintmsgloop                  A:21C7
+iterloop                         A:2038
+iterloopend                      A:2143
+positive1                        A:2052
+positive2                        A:2072
+printmsgloop                     A:21B6
 printptr                         E:0080
 start                            A:2000
-stop                             A:2170
-vga_clr_loop                     A:21DB
+stop                             A:2182
+vga_clr_loop1                    A:21F0
+vga_clr_loop2                    A:220B
 vga_ptr                          E:003C
-xloop                            A:2021
-xloopend                         A:215A
-xloopnext                        A:2144
-yloop                            A:2013
-yloopnext                        A:215A
+xloop                            A:2024
+xloopend                         A:215D
+xloopnext                        A:2147
+yloop                            A:2016
+yloop_jump                       A:217F
+yloopnext                        A:215D
 zp_a                             E:0020
 zp_a24                           E:0032
 zp_aa                            E:0024
@@ -518,8 +548,8 @@ zp_ycount                        E:003A
 Symbols by value:
 0004 XSTEP
 0006 YSTEP
-0020 MAXITER
 0020 zp_a
+0022 MAXITER
 0022 zp_b
 0024 zp_aa
 0026 zp_bb
@@ -539,34 +569,37 @@ Symbols by value:
 0080 printptr
 00A0 XCOUNT
 2000 start
-2013 yloop
-2021 xloop
-2035 iterloop
-204F positive1
-2055 continue1
-206F positive2
-2075 continue2
-2089 bitloop_a
-20B5 bitloop_b
-20CE b_bit_done
-2105 done
-2140 iterloopend
-2144 xloopnext
-215A yloopnext
-215A xloopend
-2170 stop
-2171 IO_ECHO
-2172 SerialOutWait
-2180 IO_IMM
-21A4 printmsgloop
-21B5 endprintmsgloop
-21B6 IO_KEY
-21C3 IO_INKEY
-21D1 NoKey
-21D5 VGA_CLR
-21DB vga_clr_loop
+2016 yloop
+2024 xloop
+2038 iterloop
+2052 positive1
+2058 continue1
+2072 positive2
+2078 continue2
+208C bitloop_a
+20B8 bitloop_b
+20D1 b_bit_done
+2108 done
+2143 iterloopend
+2147 xloopnext
+215D yloopnext
+215D xloopend
+217F yloop_jump
+2182 stop
+2183 IO_ECHO
+2184 SerialOutWait
+2192 IO_IMM
+21B6 printmsgloop
+21C7 endprintmsgloop
+21C8 IO_KEY
+21D5 IO_INKEY
+21E3 NoKey
+21E7 VGA_CLR
+21F0 vga_clr_loop1
+220B vga_clr_loop2
 FE40 XMIN
 FE98 YMIN
+FF00 CTRL
 FF70 ACIA
 FF70 ACIAStatus
 FF71 ACIAData

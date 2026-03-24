@@ -1,0 +1,27 @@
+Sections:
+00: "org0001:1100" (1100-110D)
+
+
+Source: ".\Fast\vga2.s"
+                        	     1: 	.org $1100
+                        	     2: 
+                        	     3: printptr = $80
+                        	     4: 
+                        	     5: start:
+00:1100 A980            	     6: 	lda #$80
+00:1102 8581            	     7: 	sta printptr+1
+00:1104 A900            	     8: 	lda #$00
+00:1106 8580            	     9: 	sta printptr
+00:1108 A9FF            	    10: 	LDA #$FF
+00:110A 9280            	    11: 	STA (printptr)
+00:110C 60              	    12: 	RTS
+                        	    13: 
+
+
+Symbols by name:
+printptr                         E:0080
+start                            A:1100
+
+Symbols by value:
+0080 printptr
+1100 start

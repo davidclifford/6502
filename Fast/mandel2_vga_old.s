@@ -16,7 +16,7 @@
 
 	.org $1FC0
 
-MAXITER = 32
+MAXITER = 34
 
 zp_a = $20
 zp_b = $22
@@ -62,6 +62,7 @@ start:
 	lda #YCOUNT
     sta zp_ycount
 
+    stz CTRL
     lda #$80
     sta vga_ptr+1
 
@@ -340,7 +341,14 @@ yloopnext:
     beq stop
 
     inc vga_ptr+1
-
+    lda vga_ptr+1
+    cmp #$C0
+    bne yloop_jump
+    lda #$FF
+    sta CTRL
+    lda #$80
+    sta vga_ptr+1
+yloop_jump:
 	jmp yloop
 
 stop:

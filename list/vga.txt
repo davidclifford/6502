@@ -1,0 +1,84 @@
+Sections:
+00: "org0001:1000" (1000-1047)
+
+
+Source: ".\Fast\vga.s"
+                        	     1: ; 830D -> 833D
+                        	     2: ; 834D
+                        	     3: ; 838D
+                        	     4: ; 83CD
+                        	     5: 
+                        	     6: ; 840D
+                        	     7: 
+                        	     8: 	.org $1000
+                        	     9: 
+                        	    10: printptr = $80
+                        	    11: 
+                        	    12: start:
+00:1000 A983            	    13: 	lda #$83
+00:1002 8581            	    14: 	sta printptr+1
+                        	    15: vga_loop_2:
+00:1004 A90D            	    16: 	lda #$0d
+00:1006 8580            	    17: 	sta printptr
+                        	    18: vga_loop_1:
+00:1008 A232            	    19: 	ldx #50
+                        	    20: vga_loop_0:
+00:100A 202910          	    21:     JSR RAND
+00:100D AD4610          	    22:     LDA XSHFT+1
+00:1010 9280            	    23: 	STA (printptr)
+                        	    24: 
+00:1012 E680            	    25: 	inc printptr
+00:1014 CA              	    26: 	dex
+00:1015 D0F3            	    27: 	bne vga_loop_0
+                        	    28: 
+00:1017 A580            	    29: 	lda printptr
+00:1019 18              	    30: 	clc
+00:101A 690E            	    31: 	adc #$0E
+00:101C 8580            	    32: 	sta printptr
+00:101E 90E8            	    33: 	bcc vga_loop_1
+                        	    34: 
+00:1020 E681            	    35: 	inc printptr+1
+00:1022 A581            	    36: 	lda printptr+1
+00:1024 C9BF            	    37: 	cmp #$BF
+00:1026 D0DC            	    38: 	bne vga_loop_2
+                        	    39: ;	bra start
+00:1028 60              	    40:     RTS
+                        	    41: 
+                        	    42: RAND:
+00:1029 AD4610          	    43:     LDA     XSHFT+1
+00:102C 6A              	    44: 	ROR
+00:102D AD4510          	    45: 	LDA     XSHFT
+00:1030 6A              	    46: 	ROR
+00:1031 4D4610          	    47: 	EOR     XSHFT+1
+00:1034 8D4610          	    48: 	STA     XSHFT+1
+00:1037 6A              	    49: 	ROR
+00:1038 4D4510          	    50: 	EOR     XSHFT
+00:103B 8D4510          	    51: 	STA     XSHFT
+00:103E 4D4610          	    52: 	EOR     XSHFT+1
+00:1041 8D4610          	    53: 	STA     XSHFT+1
+00:1044 60              	    54: 	RTS
+                        	    55: 
+00:1045 9000            	    56: XSHFT:  DW  $90
+                        	    57: 
+                        	    58: ;    .include    "io.s"
+                        	    59: 
+                        	    60: 
+
+
+Symbols by name:
+RAND                             A:1029
+XSHFT                            A:1045
+printptr                         E:0080
+start                            A:1000
+vga_loop_0                       A:100A
+vga_loop_1                       A:1008
+vga_loop_2                       A:1004
+
+Symbols by value:
+0080 printptr
+1000 start
+1004 vga_loop_2
+1008 vga_loop_1
+100A vga_loop_0
+1029 RAND
+1045 XSHFT

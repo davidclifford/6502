@@ -12,13 +12,13 @@
 ; to allow for more iterations.  I'm also rendering a different region, tailored to
 ; suit my PC's console window font.
 
-; Takes 5 seconds @32MHz
+; Takes 1 second @32MHz
 
-	.org $0FC0
-
-chars:
-	.byte " WM@#BXFGODC$&%*=FCODC$&%*=+~-;:,."
-MAXITER = *-chars
+;	.org $0FC0
+;
+;chars:
+;	.byte " WM@#BXFGODC$&%*=FCODC$&%*=+~-;:,."
+;MAXITER = *-chars
 
 zp_a = $20
 zp_b = $22
@@ -50,15 +50,15 @@ zp_ycount = $3a
 ;XCOUNT = 32
 ;YCOUNT = 24
 
-YMIN = $fec0  ; -1.25        11111110 11000000
+YMIN = $ff10  ; -1.25        11111110 11000000
 YMAX = $0140  ;  1.25        00000001 01000000
-YSTEP = $0008 ;  0.03125     00000000 00001000
-XMIN = $fe74  ; -1.546875    11111110 01110100
+YSTEP = $0010 ;  0.03125     00000000 00001000
+XMIN = $fdf0  ; -1.546875    11111110 01110100
 XMAX = $0090  ;  0.5625      00000000 10010000
-XSTEP = $0004 ;  0.015625    00000000 00000100
+XSTEP = $0010 ;  0.015625    00000000 00000100
 ; Width and height of region to display
-XCOUNT = 134
-YCOUNT = 80
+XCOUNT = 50
+YCOUNT = 30
 
 	.org $1000
 start:
@@ -77,8 +77,9 @@ yloop:
 	lda #XCOUNT
     sta zp_xcount
 
-	lda #10
-	jsr IO_ECHO
+;	lda #10
+;	jsr IO_ECHO
+;   jsr putchar
 
 xloop:
 	lda zp_x
@@ -91,8 +92,8 @@ xloop:
 	lda zp_y+1
     sta zp_b+1
 
-	ldx #MAXITER
-	stx zp_iter
+	ldx #34
+    stx zp_iter
 
 iterloop:
 
@@ -313,7 +314,8 @@ done:
 iterloopend:
 	ldx zp_iter
     lda chars,x
-    jsr IO_ECHO
+;    jsr IO_ECHO
+    jsr putchar
 
 xloopnext:
 	clc
@@ -343,9 +345,15 @@ yloopnext:
 	jmp yloop
 
 stop:
-	lda #10
-	jsr IO_ECHO
+;	lda #10
+;	jsr IO_ECHO
+;   jsr putchar
 	rts
 
-	.include io.s
+chars:
+	.byte " WM@#BXFGODC$&%*=FCODC$&%*=+~-;:,."
+MAXITER = *-chars
 
+
+;	.include io.s
+    .include putchar.s
