@@ -8,45 +8,49 @@ import sys
 import pygame
 from pygame import gfxdraw
 
-filename = 'colours'
+filename = 'finch-dither-mono'
 
 
-def plot(x, y, r, g, b):
-    psize = 8
-    col = (r << 6, g << 6, b << 6)
+def plot(x, y, v):
+    psize = 4
+    col = (255*v, 255*v, 255*v)
     for yy in range(psize):
         for xx in range(psize):
             gfxdraw.pixel(screen, x*psize+xx, y*psize+yy, col)
 
 
 pygame.init()
-screen = pygame.display.set_mode((1280, 960))
+screen = pygame.display.set_mode((1600, 960))
 
 image = Image.open(filename+'.png')
 pixels = image.load()
 
 hex_file = open(filename+'.hex', 'w')
 
-hex_file.write('FF00:00\n')
+for y in range(240):
+    line = f'{y * 64 + 0x830D:04X}: '
+    for x0 in range(50):
+        v = 0
+        for x1 in range(8):
+            x = x1 + x0*8
+            pix = pixels[x, y]
+            p = int(pix > 0)
+            v = (v << 1) + int(pix > 0)
+            plot(x, y, p)
+        line += f'{v:02X} '
 
-for y in range(120):
-    if y == 64:
-        hex_file.write('FF00:FF\n')
-    for x1 in range(5):
-        hex_file.write(f'{((y%64)*256+x1*32)+32768:04X}:')
-        for x2 in range(32):
-            x = x1*32 + x2
-            if x < 160:
-                pix = pixels[x, y]
-                red = pix[0] >> 6
-                grn = pix[1] >> 6
-                blu = pix[2] >> 6
-                colour = red << 4 | grn << 2 | blu << 0
-                hex_file.write(f' {colour:02X}')
-                plot(x, y, red, grn, blu)
-        hex_file.write('\n')
+        if x0 % 8 == 7:
+            print(f'\n{line}')
+            hex_file.write(f'\n{line}')
+            addr = x0 + y * 64 + 0x830D
+            line = f'{addr:04X}: '
+
+    print(f'\n{line}')
+    hex_file.write(f'\n{line}')
+    addr = x0 + y * 64 + 0x830D
+    line = f'{addr:04X}: '
+
     pygame.display.update()
-
 
 hex_file.close()
 

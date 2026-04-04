@@ -1,0 +1,314 @@
+Sections:
+00: "org0001:0" (0-15)
+01: "org0002:1000" (1000-1133)
+
+
+Source: ".\Fast\line2.s"
+                        	     1: ; --- Zero Page Variables ---
+                        	     2:         .org $00
+00:0000 00              	     3: X1:      ds 2
+00:0001 *
+00:0002 00              	     4: Y1:      ds 1 ; (1 byte)
+00:0003 00              	     5: X2:      ds 2 ; (2 bytes)
+00:0004 *
+00:0005 00              	     6: Y2:      ds 1 ; (1 byte)
+00:0006 00              	     7: DX:      ds 2 ; (2 bytes)
+00:0007 *
+00:0008 00              	     8: DY:      ds 2 ; (2 bytes) - 16-bit for subtraction
+00:0009 *
+00:000A 00              	     9: ERR:     ds 2 ; (2 bytes)
+00:000B *
+00:000C 00              	    10: E2:      ds 2 ; (2 bytes)
+00:000D *
+00:000E 00              	    11: STEPX:   ds 1 ; (1 byte)  1 or -1
+00:000F 00              	    12: STEPY:   ds 1 ; (1 byte)  1 or -1
+00:0010 00              	    13: SCR_PTR: ds 2 ; (2 bytes)
+00:0011 *
+00:0012 00              	    14: TEMP_H:  ds 1 ;
+00:0013 00              	    15: XSHFT:   ds 2 ;
+00:0014 *
+                        	    16: 
+                        	    17: x1 = 0
+                        	    18: y1 = 0
+                        	    19: x2 = 200
+                        	    20: y2 = 120
+                        	    21: 
+                        	    22:         .org $1000   ; Example start address
+                        	    23: start:
+01:1000 A900            	    24:         lda #<x1
+01:1002 8500            	    25:         sta X1
+01:1004 A900            	    26:         lda #>x1
+01:1006 8501            	    27:         sta X1+1
+                        	    28: 
+01:1008 A900            	    29:         lda #y1
+01:100A 8502            	    30:         sta Y1
+                        	    31: 
+01:100C A9C8            	    32:         lda #<x2
+01:100E 8503            	    33:         sta X2
+01:1010 A900            	    34:         lda #>x2
+01:1012 8504            	    35:         sta X2+1
+                        	    36: 
+01:1014 A978            	    37:         lda #y2
+01:1016 8505            	    38:         sta Y2
+                        	    39: 
+01:1018 201C10          	    40:         JSR LINE
+                        	    41: 
+                        	    42: ;        BRA start
+01:101B 60              	    43:         RTS
+                        	    44: 
+                        	    45: LINE:
+                        	    46:         ; Calculate DX = abs(X2 - X1)
+01:101C 38              	    47:         sec
+01:101D A503            	    48:         lda X2
+01:101F E500            	    49:         sbc X1
+01:1021 8506            	    50:         sta DX
+01:1023 A504            	    51:         lda X2+1
+01:1025 E501            	    52:         sbc X1+1
+01:1027 8507            	    53:         sta DX+1
+01:1029 B013            	    54:         bcs .set_sx_pos
+                        	    55:         ; Negate DX
+01:102B A900            	    56:         lda #0
+01:102D 38              	    57:         sec
+01:102E E506            	    58:         sbc DX
+01:1030 8506            	    59:         sta DX
+01:1032 A900            	    60:         lda #0
+01:1034 E507            	    61:         sbc DX+1
+01:1036 8507            	    62:         sta DX+1
+01:1038 A9FF            	    63:         lda #$ff    ; StepX = -1
+01:103A 850E            	    64:         sta STEPX
+01:103C 8004            	    65:         bra .calc_dy
+                        	    66: .set_sx_pos
+01:103E A901            	    67:         lda #1      ; StepX = 1
+01:1040 850E            	    68:         sta STEPX
+                        	    69: 
+                        	    70: .calc_dy
+                        	    71:         ; Calculate DY = abs(Y2 - Y1)
+01:1042 38              	    72:         sec
+01:1043 A505            	    73:         lda Y2
+01:1045 E502            	    74:         sbc Y1
+01:1047 B00B            	    75:         bcs .set_sy_pos
+01:1049 49FF            	    76:         eor #$ff
+01:104B 1A              	    77:         inc a
+01:104C 8508            	    78:         sta DY
+01:104E A9FF            	    79:         lda #$ff    ; StepY = -1
+01:1050 850F            	    80:         sta STEPY
+01:1052 8006            	    81:         bra .init_err
+                        	    82: .set_sy_pos
+01:1054 8508            	    83:         sta DY
+01:1056 A901            	    84:         lda #1      ; StepY = 1
+01:1058 850F            	    85:         sta STEPY
+                        	    86: 
+                        	    87: .init_err
+01:105A 6409            	    88:         stz DY+1    ; High byte of DY for 16-bit math
+01:105C A506            	    89:         lda DX
+01:105E 38              	    90:         sec
+01:105F E508            	    91:         sbc DY
+01:1061 850A            	    92:         sta ERR
+01:1063 A507            	    93:         lda DX+1
+01:1065 E509            	    94:         sbc DY+1
+01:1067 850B            	    95:         sta ERR+1
+                        	    96: 
+                        	    97: .loop
+01:1069 20D910          	    98:         jsr PLOT_PIXEL
+                        	    99: 
+                        	   100:         ; Check if X1==X2 and Y1==Y2
+01:106C A500            	   101:         lda X1
+01:106E C503            	   102:         cmp X2
+01:1070 D00C            	   103:         bne .step_logic
+01:1072 A501            	   104:         lda X1+1
+01:1074 C504            	   105:         cmp X2+1
+01:1076 D006            	   106:         bne .step_logic
+01:1078 A502            	   107:         lda Y1
+01:107A C505            	   108:         cmp Y2
+01:107C F05A            	   109:         beq .done
+                        	   110: 
+                        	   111: .step_logic
+                        	   112:         ; E2 = ERR * 2
+01:107E A50A            	   113:         lda ERR
+01:1080 0A              	   114:         asl a
+01:1081 850C            	   115:         sta E2
+01:1083 A50B            	   116:         lda ERR+1
+01:1085 2A              	   117:         rol a
+01:1086 850D            	   118:         sta E2+1
+                        	   119: 
+                        	   120:         ; if (E2 > -DY) { ERR -= DY; X1 += STEPX; }
+                        	   121:         ; -DY comparison is tricky, easier to check E2 + DY > 0
+01:1088 18              	   122:         clc
+01:1089 A50C            	   123:         lda E2
+01:108B 6508            	   124:         adc DY
+01:108D A50D            	   125:         lda E2+1
+01:108F 6509            	   126:         adc DY+1
+01:1091 3024            	   127:         bmi .check_y    ; If result is negative, E2 <= -DY
+                        	   128: 
+                        	   129:         ; ERR -= DY
+01:1093 38              	   130:         sec
+01:1094 A50A            	   131:         lda ERR
+01:1096 E508            	   132:         sbc DY
+01:1098 850A            	   133:         sta ERR
+01:109A A50B            	   134:         lda ERR+1
+01:109C E509            	   135:         sbc DY+1
+01:109E 850B            	   136:         sta ERR+1
+                        	   137:         ; X1 += STEPX
+01:10A0 18              	   138:         clc
+01:10A1 A500            	   139:         lda X1
+01:10A3 650E            	   140:         adc STEPX
+01:10A5 8500            	   141:         sta X1
+01:10A7 A501            	   142:         lda X1+1
+01:10A9 6900            	   143:         adc #0
+01:10AB 8501            	   144:         sta X1+1
+                        	   145:         ; Handle StepX negative (if STEPX is $FF, ADC #0 doesn't carry right)
+01:10AD 240E            	   146:         bit STEPX
+01:10AF 1006            	   147:         bpl .check_y
+01:10B1 A501            	   148:         lda X1+1
+01:10B3 E900            	   149:         sbc #0          ; Manual borrow if StepX was -1
+01:10B5 8501            	   150:         sta X1+1
+                        	   151: 
+                        	   152: .check_y
+                        	   153:         ; if (E2 < DX) { ERR += DX; Y1 += STEPY; }
+01:10B7 38              	   154:         sec
+01:10B8 A506            	   155:         lda DX
+01:10BA E50C            	   156:         sbc E2
+01:10BC A507            	   157:         lda DX+1
+01:10BE E50D            	   158:         sbc E2+1
+01:10C0 30A7            	   159:         bmi .loop       ; If DX < E2, skip Y step
+                        	   160: 
+                        	   161:         ; ERR += DX
+01:10C2 18              	   162:         clc
+01:10C3 A50A            	   163:         lda ERR
+01:10C5 6506            	   164:         adc DX
+01:10C7 850A            	   165:         sta ERR
+01:10C9 A50B            	   166:         lda ERR+1
+01:10CB 6507            	   167:         adc DX+1
+01:10CD 850B            	   168:         sta ERR+1
+                        	   169:         ; Y1 += STEPY
+01:10CF 18              	   170:         clc
+01:10D0 A502            	   171:         lda Y1
+01:10D2 650F            	   172:         adc STEPY
+01:10D4 8502            	   173:         sta Y1
+01:10D6 8091            	   174:         bra .loop
+                        	   175: 
+                        	   176: .done
+01:10D8 60              	   177:         rts
+                        	   178: 
+                        	   179: PLOT_PIXEL:
+                        	   180:         ; 1. Calculate Y * 64 (Stride)
+                        	   181:         ; Pointer = Y1
+01:10D9 A502            	   182:         lda Y1
+01:10DB 8510            	   183:         sta SCR_PTR
+01:10DD 6411            	   184:         stz SCR_PTR+1    ; 65C02 Store Zero
+                        	   185: 
+                        	   186:         ; Shift Y left 6 times (Y * 64)
+01:10DF 0610            	   187:         asl SCR_PTR
+01:10E1 2611            	   188:         rol SCR_PTR+1    ; *2
+01:10E3 0610            	   189:         asl SCR_PTR
+01:10E5 2611            	   190:         rol SCR_PTR+1    ; *4
+01:10E7 0610            	   191:         asl SCR_PTR
+01:10E9 2611            	   192:         rol SCR_PTR+1    ; *8
+01:10EB 0610            	   193:         asl SCR_PTR
+01:10ED 2611            	   194:         rol SCR_PTR+1    ; *16
+01:10EF 0610            	   195:         asl SCR_PTR
+01:10F1 2611            	   196:         rol SCR_PTR+1    ; *32
+01:10F3 0610            	   197:         asl SCR_PTR
+01:10F5 2611            	   198:         rol SCR_PTR+1    ; *64
+                        	   199: 
+                        	   200:         ; 2. Add Base Address $840D
+01:10F7 A510            	   201:         lda SCR_PTR
+01:10F9 18              	   202:         clc
+01:10FA 690D            	   203:         adc #$0d
+01:10FC 8510            	   204:         sta SCR_PTR
+01:10FE A511            	   205:         lda SCR_PTR+1
+01:1100 6983            	   206:         adc #$83
+01:1102 8511            	   207:         sta SCR_PTR+1
+                        	   208: 
+                        	   209:         ; 3. Add X / 8 (16-bit shift right 3 times)
+                        	   210:         ; Load X into (TEMP_H:A) to perform the shift
+01:1104 A501            	   211:         lda X1+1
+01:1106 8512            	   212:         sta TEMP_H
+01:1108 A500            	   213:         lda X1
+                        	   214: 
+                        	   215:         ; Shift 1
+01:110A 4612            	   216:         lsr TEMP_H       ; High bit 0 -> Carry
+01:110C 6A              	   217:         ror a            ; Carry -> Low bit 7
+                        	   218:         ; Shift 2
+01:110D 4612            	   219:         lsr TEMP_H
+01:110F 6A              	   220:         ror a
+                        	   221:         ; Shift 3
+01:1110 4612            	   222:         lsr TEMP_H
+01:1112 6A              	   223:         ror a
+                        	   224: 
+                        	   225:         ; 'a' now holds the byte offset, 'TEMP_H' holds the overflow
+01:1113 18              	   226:         clc
+01:1114 6510            	   227:         adc SCR_PTR
+01:1116 8510            	   228:         sta SCR_PTR
+01:1118 A512            	   229:         lda TEMP_H
+01:111A 6511            	   230:         adc SCR_PTR+1
+01:111C 8511            	   231:         sta SCR_PTR+1
+                        	   232: 
+                        	   233:         ; 4. Apply Pixel Mask
+                        	   234:         ; Bitmask: 1 << (7 - (X1 & 7))
+01:111E A500            	   235:         lda X1
+01:1120 2907            	   236:         and #7
+01:1122 AA              	   237:         tax              ; X = 0-7 index
+01:1123 BD2B11          	   238:         lda BIT_TABLE,x  ; Use Absolute,X indexing (no space after comma)
+01:1126 1210            	   239:         ora (SCR_PTR)    ; 65C02 Indirect ORA (no Y register needed)
+01:1128 9210            	   240:         sta (SCR_PTR)
+01:112A 60              	   241:         rts
+                        	   242: 
+                        	   243: ; Place this at the very end of your source file
+                        	   244: BIT_TABLE:
+01:112B 80              	   245:     db $80, $40, $20, $10, $08, $04, $02, $01
+01:112C 40
+01:112D 20
+01:112E 10
+01:112F 08
+01:1130 04
+01:1131 02
+01:1132 01
+                        	   246: 
+
+
+Symbols by name:
+BIT_TABLE                        A:112B
+DX                               A:0006
+DY                               A:0008
+E2                               A:000C
+ERR                              A:000A
+LINE                             A:101C
+PLOT_PIXEL                       A:10D9
+SCR_PTR                          A:0010
+STEPX                            A:000E
+STEPY                            A:000F
+TEMP_H                           A:0012
+X1                               A:0000
+X2                               A:0003
+XSHFT                            A:0013
+Y1                               A:0002
+Y2                               A:0005
+start                            A:1000
+x1                               E:0000
+x2                               E:00C8
+y1                               E:0000
+y2                               E:0078
+
+Symbols by value:
+0000 y1
+0000 x1
+0000 X1
+0002 Y1
+0003 X2
+0005 Y2
+0006 DX
+0008 DY
+000A ERR
+000C E2
+000E STEPX
+000F STEPY
+0010 SCR_PTR
+0012 TEMP_H
+0013 XSHFT
+0078 y2
+00C8 x2
+1000 start
+101C LINE
+10D9 PLOT_PIXEL
+112B BIT_TABLE

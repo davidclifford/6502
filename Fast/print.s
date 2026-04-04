@@ -1,6 +1,6 @@
     .org $3000
 
-count=$A5
+count=$95
 
 start:
 	lda #17

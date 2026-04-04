@@ -5,7 +5,7 @@ Sections:
 Source: ".\Fast\cls.s"
                         	     1: 	.org $2000
                         	     2: 
-                        	     3: printptr = $80
+                        	     3: plotptr = $80
                         	     4: col=$A0
                         	     5: row=$A1
                         	     6: 
@@ -13,17 +13,17 @@ Source: ".\Fast\cls.s"
 00:2000 64A1            	     8: 	stz row
 00:2002 64A0            	     9: 	stz col
 00:2004 A980            	    10: 	lda #$80
-00:2006 8581            	    11: 	sta printptr+1
-00:2008 6480            	    12: 	stz printptr
+00:2006 8581            	    11: 	sta plotptr+1
+00:2008 6480            	    12: 	stz plotptr
                         	    13: 
                         	    14: vga_clr_loop0:
 00:200A A900            	    15: 	lda #0
-00:200C 9280            	    16: 	STA (printptr)
+00:200C 9280            	    16: 	STA (plotptr)
                         	    17: 
-00:200E E680            	    18: 	inc printptr
+00:200E E680            	    18: 	inc plotptr
 00:2010 D0F8            	    19: 	bne vga_clr_loop0
-00:2012 E681            	    20: 	inc printptr+1
-00:2014 A581            	    21: 	lda printptr+1
+00:2012 E681            	    20: 	inc plotptr+1
+00:2014 A581            	    21: 	lda plotptr+1
 00:2016 C9C0            	    22: 	cmp #$C0
 00:2018 D0F0            	    23: 	bne vga_clr_loop0
 00:201A 60              	    24:     RTS
@@ -32,13 +32,13 @@ Source: ".\Fast\cls.s"
 
 Symbols by name:
 col                              E:00A0
-printptr                         E:0080
+plotptr                          E:0080
 row                              E:00A1
 start                            A:2000
 vga_clr_loop0                    A:200A
 
 Symbols by value:
-0080 printptr
+0080 plotptr
 00A0 col
 00A1 row
 2000 start

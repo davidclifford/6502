@@ -6,11 +6,11 @@ Sections:
 Source: ".\Fast\print.s"
                         	     1:     .org $3000
                         	     2: 
-                        	     3: count=$A5
+                        	     3: count=$95
                         	     4: 
                         	     5: start:
 00:3000 A911            	     6: 	lda #17
-00:3002 85A5            	     7: 	sta count
+00:3002 8595            	     7: 	sta count
                         	     8: again:
 00:3004 A900            	     9:     lda #0
 00:3006 AA              	    10: 	tax
@@ -22,7 +22,7 @@ Source: ".\Fast\print.s"
 00:3011 E8              	    16: 	inx
 00:3012 80F3            	    17: 	bra next
                         	    18: fin:
-00:3014 C6A5            	    19: 	dec count
+00:3014 C695            	    19: 	dec count
 00:3016 D0EC            	    20: 	bne again
                         	    21: ;	bra again
 00:3018 60              	    22: 	rts
@@ -896,7 +896,7 @@ again                            A:3004
 chr                              E:00A2
 chrptr                           E:00A3
 col                              E:00A0
-count                            E:00A5
+count                            E:0095
 fin                              A:3014
 finish                           A:30CB
 font                             E:3000
@@ -912,11 +912,11 @@ start                            A:3000
 
 Symbols by value:
 0080 plotptr
+0095 count
 00A0 col
 00A1 row
 00A2 chr
 00A3 chrptr
-00A5 count
 3000 font
 3000 start
 3004 again

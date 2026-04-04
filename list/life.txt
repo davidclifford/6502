@@ -253,7 +253,7 @@ Source: ".\Fast\life.s"
                         	   244: 
                         	   245: 	; Use a lookup table to determine its next state
 00:112C AA              	   246: 	tax
-00:112D BDC411          	   247:     lda lookup,x
+00:112D BDF911          	   247:     lda lookup,x
 00:1130 9120            	   248:     sta (zp_ptr),y
                         	   249: 
                         	   250: 	; Advance to next cell
@@ -298,84 +298,119 @@ Source: "io.s"
                         	     3: ACIAStatus := ACIA+0
                         	     4: ACIAData := ACIA+1
                         	     5: 
-                        	     6: printptr = $80
+                        	     6: CTRL := $FF00
                         	     7: 
-                        	     8: ; Output character in A and return.
-                        	     9: IO_ECHO:
-00:1160 48              	    10: 	PHA
-                        	    11: SerialOutWait:
-00:1161 AD70FF          	    12: 	LDA	ACIAStatus
-00:1164 2902            	    13: 	AND	#2
-00:1166 C902            	    14: 	CMP	#2
-00:1168 D0F7            	    15: 	BNE	SerialOutWait
-00:116A 68              	    16: 	PLA
-00:116B 8D71FF          	    17: 	STA	ACIAData
-00:116E 60              	    18: 	RTS
-                        	    19: 
-                        	    20: IO_IMM:
-00:116F 48              	    21: 	pha
-00:1170 DA              	    22:     phx
-00:1171 5A              	    23:     phy
-                        	    24: 
-00:1172 BA              	    25: 	tsx
-00:1173 18              	    26: 	clc
-00:1174 BD0401          	    27: 	lda $0104,x
-00:1177 6901            	    28:     adc #1
-00:1179 8580            	    29:     sta printptr
-00:117B BD0501          	    30: 	lda $0105,x
-00:117E 6900            	    31:     adc #0
-00:1180 8581            	    32:     sta printptr+1
-                        	    33: 
-00:1182 209311          	    34: 	jsr printmsgloop
+                        	     8: printptr = $80
+                        	     9: 
+                        	    10: ; Output character in A and return.
+                        	    11: IO_ECHO:
+00:1160 48              	    12: 	PHA
+                        	    13: SerialOutWait:
+00:1161 AD70FF          	    14: 	LDA	ACIAStatus
+00:1164 2902            	    15: 	AND	#2
+00:1166 C902            	    16: 	CMP	#2
+00:1168 D0F7            	    17: 	BNE	SerialOutWait
+00:116A 68              	    18: 	PLA
+00:116B 8D71FF          	    19: 	STA	ACIAData
+00:116E 60              	    20: 	RTS
+                        	    21: 
+                        	    22: IO_IMM:
+00:116F 48              	    23: 	pha
+00:1170 DA              	    24:     phx
+00:1171 5A              	    25:     phy
+                        	    26: 
+00:1172 BA              	    27: 	tsx
+00:1173 18              	    28: 	clc
+00:1174 BD0401          	    29: 	lda $0104,x
+00:1177 6901            	    30:     adc #1
+00:1179 8580            	    31:     sta printptr
+00:117B BD0501          	    32: 	lda $0105,x
+00:117E 6900            	    33:     adc #0
+00:1180 8581            	    34:     sta printptr+1
                         	    35: 
-00:1185 A580            	    36: 	lda printptr
-00:1187 9D0401          	    37:     sta $0104,x
-00:118A A581            	    38: 	lda printptr+1
-00:118C 9D0501          	    39:     sta $0105,x
-                        	    40: 
-00:118F 7A              	    41: 	ply
-00:1190 FA              	    42:     plx
-00:1191 68              	    43:     pla
-00:1192 60              	    44: 	rts
-                        	    45: 
-                        	    46: printmsgloop:
-00:1193 A000            	    47: 	ldy #0
-00:1195 B180            	    48: 	lda (printptr),y
-00:1197 F00B            	    49: 	beq endprintmsgloop
-00:1199 206011          	    50: 	jsr IO_ECHO
-00:119C E680            	    51: 	inc printptr
-00:119E D0F3            	    52: 	bne printmsgloop
-00:11A0 E681            	    53: 	inc printptr+1
-00:11A2 80EF            	    54: 	bra printmsgloop
-                        	    55: 
-                        	    56: endprintmsgloop:
-00:11A4 60              	    57: 	rts
-                        	    58: 
-                        	    59: 
-                        	    60: ; Wait for key and return code in A
-                        	    61: IO_KEY:
-00:11A5 AD70FF          	    62:     LDA	    ACIAStatus
-00:11A8 2901            	    63:     AND	    #1
-00:11AA C901            	    64:     CMP	    #1
-00:11AC D0F7            	    65:     BNE     IO_KEY
-00:11AE AD71FF          	    66:     LDA	    ACIAData
-00:11B1 60              	    67:     RTS
-                        	    68: 
-                        	    69: ; Get next key press in A and set Carry.
-                        	    70: ; If no key then clear carry and return zero in A.
-                        	    71: IO_INKEY:
-00:11B2 AD70FF          	    72:     LDA	    ACIAStatus
-00:11B5 2901            	    73:     AND	    #1
-00:11B7 C901            	    74:     CMP	    #1
-00:11B9 D005            	    75:     BNE     NoKey
-00:11BB AD71FF          	    76:     LDA	    ACIAData
-00:11BE 38              	    77:     SEC
-00:11BF 60              	    78:     RTS
-                        	    79: NoKey:
-00:11C0 A900            	    80:     LDA     #0
-00:11C2 18              	    81:     CLC
-00:11C3 60              	    82:     RTS
-                        	    83: 
+00:1182 209311          	    36: 	jsr printmsgloop
+                        	    37: 
+00:1185 A580            	    38: 	lda printptr
+00:1187 9D0401          	    39:     sta $0104,x
+00:118A A581            	    40: 	lda printptr+1
+00:118C 9D0501          	    41:     sta $0105,x
+                        	    42: 
+00:118F 7A              	    43: 	ply
+00:1190 FA              	    44:     plx
+00:1191 68              	    45:     pla
+00:1192 60              	    46: 	rts
+                        	    47: 
+                        	    48: printmsgloop:
+00:1193 A000            	    49: 	ldy #0
+00:1195 B180            	    50: 	lda (printptr),y
+00:1197 F00B            	    51: 	beq endprintmsgloop
+00:1199 206011          	    52: 	jsr IO_ECHO
+00:119C E680            	    53: 	inc printptr
+00:119E D0F3            	    54: 	bne printmsgloop
+00:11A0 E681            	    55: 	inc printptr+1
+00:11A2 80EF            	    56: 	bra printmsgloop
+                        	    57: 
+                        	    58: endprintmsgloop:
+00:11A4 60              	    59: 	rts
+                        	    60: 
+                        	    61: 
+                        	    62: ; Wait for key and return code in A
+                        	    63: IO_KEY:
+00:11A5 AD70FF          	    64:     LDA	    ACIAStatus
+00:11A8 2901            	    65:     AND	    #1
+00:11AA C901            	    66:     CMP	    #1
+00:11AC D0F7            	    67:     BNE     IO_KEY
+00:11AE AD71FF          	    68:     LDA	    ACIAData
+00:11B1 60              	    69:     RTS
+                        	    70: 
+                        	    71: ; Get next key press in A and set Carry.
+                        	    72: ; If no key then clear carry and return zero in A.
+                        	    73: IO_INKEY:
+00:11B2 AD70FF          	    74:     LDA	    ACIAStatus
+00:11B5 2901            	    75:     AND	    #1
+00:11B7 C901            	    76:     CMP	    #1
+00:11B9 D005            	    77:     BNE     NoKey
+00:11BB AD71FF          	    78:     LDA	    ACIAData
+00:11BE 38              	    79:     SEC
+00:11BF 60              	    80:     RTS
+                        	    81: NoKey:
+00:11C0 A900            	    82:     LDA     #0
+00:11C2 18              	    83:     CLC
+00:11C3 60              	    84:     RTS
+                        	    85: 
+                        	    86: VGA_CLR:
+00:11C4 9C00FF          	    87: 	stz CTRL
+00:11C7 A980            	    88: 	lda #$80
+00:11C9 8581            	    89: 	sta printptr+1
+00:11CB 6480            	    90: 	stz printptr
+                        	    91: 
+                        	    92: vga_clr_loop1:
+00:11CD A9AA            	    93: 	lda #$AA
+00:11CF 9280            	    94: 	sta (printptr)
+00:11D1 E680            	    95: 	inc printptr
+00:11D3 D0F8            	    96: 	bne vga_clr_loop1
+00:11D5 E681            	    97: 	inc printptr+1
+00:11D7 A581            	    98: 	lda printptr+1
+00:11D9 C9C0            	    99: 	cmp #$C0
+00:11DB D0F0            	   100: 	bne vga_clr_loop1
+                        	   101: 
+00:11DD A9FF            	   102: 	lda #$FF
+00:11DF 8D00FF          	   103: 	sta CTRL
+00:11E2 A980            	   104: 	lda #$80
+00:11E4 8581            	   105: 	sta printptr+1
+00:11E6 6480            	   106: 	stz printptr
+                        	   107: vga_clr_loop2:
+00:11E8 A900            	   108: 	lda #0
+00:11EA 9280            	   109: 	sta (printptr)
+00:11EC E680            	   110: 	inc printptr
+00:11EE D0F8            	   111: 	bne vga_clr_loop2
+00:11F0 E681            	   112: 	inc printptr+1
+00:11F2 A581            	   113: 	lda printptr+1
+00:11F4 C9C0            	   114: 	cmp #$C0
+00:11F6 D0F0            	   115: 	bne vga_clr_loop2
+                        	   116: 
+00:11F8 60              	   117: 	rts
+                        	   118: 
 
 Source: ".\Fast\life.s"
                         	   285: 
@@ -385,29 +420,29 @@ Source: ".\Fast\life.s"
                         	   289: 	;    0011 0  - dead with three neighbours
                         	   290:     ;    0100 1  - live with three other neighbours
                         	   291: 	; Otherwise it dies.
-00:11C4 00              	   292: 	.byte 0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0
-00:11C5 00
-00:11C6 00
-00:11C7 00
-00:11C8 00
-00:11C9 00
-00:11CA 01
-00:11CB 01
-00:11CC 00
-00:11CD 01
-00:11CE 00
-00:11CF 00
-00:11D0 00
-00:11D1 00
-00:11D2 00
-00:11D3 00
-00:11D4 00
-00:11D5 00
-00:11D6 00
-00:11D7 00
+00:11F9 00              	   292: 	.byte 0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0
+00:11FA 00
+00:11FB 00
+00:11FC 00
+00:11FD 00
+00:11FE 00
+00:11FF 01
+00:1200 01
+00:1201 00
+00:1202 01
+00:1203 00
+00:1204 00
+00:1205 00
+00:1206 00
+00:1207 00
+00:1208 00
+00:1209 00
+00:120A 00
+00:120B 00
+00:120C 00
                         	   293: 
-00:11D8 00              	   294: 	.dsb $2000-*,0
-00:11D9 *
+00:120D 00              	   294: 	.dsb $2000-*,0
+00:120E *
                         	   295: 
                         	   296: data_grid:
 00:2000 00              	   297: 	.byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -3492,12 +3527,14 @@ Symbols by name:
 ACIA                             E:FF70
 ACIAData                         E:FF71
 ACIAStatus                       E:FF70
+CTRL                             E:FF00
 IO_ECHO                          A:1160
 IO_IMM                           A:116F
 IO_INKEY                         A:11B2
 IO_KEY                           A:11A5
 NoKey                            A:11C0
 SerialOutWait                    A:1161
+VGA_CLR                          A:11C4
 XSIZE                            E:0030
 YSIZE                            E:0040
 data_grid                        A:2000
@@ -3510,7 +3547,7 @@ endprintmsgloop                  A:11A4
 entry                            A:1000
 iter                             A:109C
 lastrowloop                      A:10F2
-lookup                           A:11C4
+lookup                           A:11F9
 loop                             A:104C
 next                             A:1083
 printmsgloop                     A:1193
@@ -3518,6 +3555,8 @@ printptr                         E:0080
 redisplay                        A:1054
 sumhoriz                         A:10A3
 updatecells                      A:10FC
+vga_clr_loop1                    A:11CD
+vga_clr_loop2                    A:11E8
 xloop                            A:100F
 xloop1                           A:1068
 xloop2                           A:10B6
@@ -3569,9 +3608,13 @@ Symbols by value:
 11A5 IO_KEY
 11B2 IO_INKEY
 11C0 NoKey
-11C4 lookup
+11C4 VGA_CLR
+11CD vga_clr_loop1
+11E8 vga_clr_loop2
+11F9 lookup
 2000 data_grid
 4000 data_hsumgrid
+FF00 CTRL
 FF70 ACIA
 FF70 ACIAStatus
 FF71 ACIAData
