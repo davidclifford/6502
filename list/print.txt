@@ -1,5 +1,5 @@
 Sections:
-00: "org0001:3000" (3000-30CC)
+00: "org0001:3000" (3000-30D4)
 01: "org0002:3100" (3100-3400)
 
 
@@ -9,7 +9,7 @@ Source: ".\Fast\print.s"
                         	     3: count=$95
                         	     4: 
                         	     5: start:
-00:3000 A911            	     6: 	lda #17
+00:3000 A90A            	     6: 	lda #10
 00:3002 8595            	     7: 	sta count
                         	     8: again:
 00:3004 A900            	     9:     lda #0
@@ -18,7 +18,7 @@ Source: ".\Fast\print.s"
 00:3007 BD1930          	    12: 	lda mess,x
 00:300A C900            	    13: 	cmp #0
 00:300C F006            	    14: 	beq fin
-00:300E 207030          	    15: 	jsr putchar
+00:300E 207830          	    15: 	jsr putchar
 00:3011 E8              	    16: 	inx
 00:3012 80F3            	    17: 	bra next
                         	    18: fin:
@@ -28,20 +28,24 @@ Source: ".\Fast\print.s"
 00:3018 60              	    22: 	rts
                         	    23: 
                         	    24: mess:
-00:3019 5061636B206D7920	    25: 	db "Pack my box with five dozen liquor jugs? The quick brown fox jumps over the lazy dog! ",0
-00:3021 626F782077697468
-00:3029 206669766520646F
-00:3031 7A656E206C697175
-00:3039 6F72206A7567733F
-00:3041 2054686520717569
-00:3049 636B2062726F776E
-00:3051 20666F78206A756D
-00:3059 7073206F76657220
-00:3061 746865206C617A79
-00:3069 20646F672120
-00:306F 00
-                        	    26: 
-                        	    27: 	.include putchar.s
+                        	    25: ;	db "Pack my box with five dozen liquor jugs? The quick brown fox jumps over the lazy dog! "
+00:3019 3132333435363738	    26: 	db "1234567890!@#$%^&*()-_=+[{]};:',<.>/?`~",34,127
+00:3021 393021402324255E
+00:3029 262A28292D5F3D2B
+00:3031 5B7B5D7D3B3A272C
+00:3039 3C2E3E2F3F607E
+00:3040 22
+00:3041 7F
+00:3042 7177657274797569	    27: 	db "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM", 0
+00:304A 6F70617364666768
+00:3052 6A6B6C7A78637662
+00:305A 6E6D205157455254
+00:3062 5955494F50415344
+00:306A 4647484A4B4C5A58
+00:3072 4356424E4D
+00:3077 00
+                        	    28: 
+                        	    29: 	.include putchar.s
 
 Source: "putchar.s"
                         	     1: plotptr=$80
@@ -51,68 +55,68 @@ Source: "putchar.s"
                         	     5: chrptr=$A3
                         	     6: 
                         	     7: putchar:
-00:3070 85A2            	     8: 	sta chr
+00:3078 85A2            	     8: 	sta chr
                         	     9: ; Carrage return
-00:3072 C90A            	    10: 	cmp #10
-00:3074 F048            	    11: 	beq row_down
+00:307A C90A            	    10: 	cmp #10
+00:307C F048            	    11: 	beq row_down
                         	    12: 
                         	    13: ; row, column to starting address
-00:3076 A5A1            	    14: 	lda row
-00:3078 0A              	    15: 	asl
-00:3079 18              	    16: 	clc
-00:307A 6983            	    17: 	adc #$83
-00:307C 8581            	    18: 	sta plotptr+1
-00:307E A5A0            	    19: 	lda col
-00:3080 18              	    20: 	clc
-00:3081 690D            	    21: 	adc #$0D
-00:3083 8580            	    22: 	sta plotptr
+00:307E A5A1            	    14: 	lda row
+00:3080 0A              	    15: 	asl
+00:3081 18              	    16: 	clc
+00:3082 6983            	    17: 	adc #$83
+00:3084 8581            	    18: 	sta plotptr+1
+00:3086 A5A0            	    19: 	lda col
+00:3088 18              	    20: 	clc
+00:3089 690D            	    21: 	adc #$0D
+00:308B 8580            	    22: 	sta plotptr
                         	    23: 
-00:3085 A008            	    24: 	ldy #$08
+00:308D A008            	    24: 	ldy #$08
                         	    25: ; get char address
-00:3087 64A4            	    26: 	stz chrptr+1
-00:3089 A5A2            	    27: 	lda chr
-00:308B 85A3            	    28: 	sta chrptr
-00:308D 06A3            	    29: 	asl chrptr
-00:308F 26A4            	    30: 	rol chrptr+1
-00:3091 06A3            	    31: 	asl chrptr
-00:3093 26A4            	    32: 	rol chrptr+1
-00:3095 06A3            	    33: 	asl chrptr
-00:3097 26A4            	    34: 	rol chrptr+1
-00:3099 A5A4            	    35: 	lda chrptr+1
-00:309B 18              	    36: 	clc
-00:309C 6930            	    37: 	adc #>font
-00:309E 85A4            	    38: 	sta chrptr+1
+00:308F 64A4            	    26: 	stz chrptr+1
+00:3091 A5A2            	    27: 	lda chr
+00:3093 85A3            	    28: 	sta chrptr
+00:3095 06A3            	    29: 	asl chrptr
+00:3097 26A4            	    30: 	rol chrptr+1
+00:3099 06A3            	    31: 	asl chrptr
+00:309B 26A4            	    32: 	rol chrptr+1
+00:309D 06A3            	    33: 	asl chrptr
+00:309F 26A4            	    34: 	rol chrptr+1
+00:30A1 A5A4            	    35: 	lda chrptr+1
+00:30A3 18              	    36: 	clc
+00:30A4 6930            	    37: 	adc #>font
+00:30A6 85A4            	    38: 	sta chrptr+1
                         	    39: loop:
-00:30A0 B2A3            	    40: 	lda (chrptr)
-00:30A2 9280            	    41: 	sta (plotptr)
+00:30A8 B2A3            	    40: 	lda (chrptr)
+00:30AA 9280            	    41: 	sta (plotptr)
                         	    42: ; next line down
-00:30A4 A580            	    43: 	lda plotptr
-00:30A6 18              	    44: 	clc
-00:30A7 6940            	    45: 	adc #$40
-00:30A9 8580            	    46: 	sta plotptr
-00:30AB 9002            	    47: 	bcc nocarry
-00:30AD E681            	    48: 	inc plotptr+1
+00:30AC A580            	    43: 	lda plotptr
+00:30AE 18              	    44: 	clc
+00:30AF 6940            	    45: 	adc #$40
+00:30B1 8580            	    46: 	sta plotptr
+00:30B3 9002            	    47: 	bcc nocarry
+00:30B5 E681            	    48: 	inc plotptr+1
                         	    49: nocarry:
-00:30AF E6A3            	    50: 	inc chrptr
-00:30B1 88              	    51: 	dey
-00:30B2 D0EC            	    52: 	bne loop
+00:30B7 E6A3            	    50: 	inc chrptr
+00:30B9 88              	    51: 	dey
+00:30BA D0EC            	    52: 	bne loop
                         	    53: ; MOVE CURSOR FORWARD
-00:30B4 A5A0            	    54: 	lda col
-00:30B6 1A              	    55: 	inc
-00:30B7 C932            	    56: 	cmp #50
-00:30B9 B003            	    57: 	bcs row_down
-00:30BB 85A0            	    58: 	sta col
-00:30BD 60              	    59: 	rts
+00:30BC A5A0            	    54: 	lda col
+00:30BE 1A              	    55: 	inc
+00:30BF C932            	    56: 	cmp #50
+00:30C1 B003            	    57: 	bcs row_down
+00:30C3 85A0            	    58: 	sta col
+00:30C5 60              	    59: 	rts
                         	    60: row_down:
-00:30BE 64A0            	    61:     stz col
-00:30C0 A5A1            	    62: 	lda row
-00:30C2 1A              	    63: 	inc
-00:30C3 C91E            	    64: 	cmp #30
-00:30C5 85A1            	    65: 	sta row
-00:30C7 D002            	    66: 	bne finish
-00:30C9 64A1            	    67: 	stz row
+00:30C6 64A0            	    61:     stz col
+00:30C8 A5A1            	    62: 	lda row
+00:30CA 1A              	    63: 	inc
+00:30CB C91E            	    64: 	cmp #30
+00:30CD 85A1            	    65: 	sta row
+00:30CF D002            	    66: 	bne finish
+00:30D1 64A1            	    67: 	stz row
                         	    68: finish:
-00:30CB 60              	    69: 	rts
+00:30D3 60              	    69: 	rts
                         	    70: 
                         	    71: font=$3000
                         	    72: 	.org $3100
@@ -888,7 +892,7 @@ Source: "putchar.s"
                         	   170: 
 
 Source: ".\Fast\print.s"
-                        	    28: 
+                        	    30: 
 
 
 Symbols by name:
@@ -898,16 +902,16 @@ chrptr                           E:00A3
 col                              E:00A0
 count                            E:0095
 fin                              A:3014
-finish                           A:30CB
+finish                           A:30D3
 font                             E:3000
-loop                             A:30A0
+loop                             A:30A8
 mess                             A:3019
 next                             A:3007
-nocarry                          A:30AF
+nocarry                          A:30B7
 plotptr                          E:0080
-putchar                          A:3070
+putchar                          A:3078
 row                              E:00A1
-row_down                         A:30BE
+row_down                         A:30C6
 start                            A:3000
 
 Symbols by value:
@@ -923,8 +927,8 @@ Symbols by value:
 3007 next
 3014 fin
 3019 mess
-3070 putchar
-30A0 loop
-30AF nocarry
-30BE row_down
-30CB finish
+3078 putchar
+30A8 loop
+30B7 nocarry
+30C6 row_down
+30D3 finish

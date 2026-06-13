@@ -1,117 +1,86 @@
-ACIA := $FF70
-ACIAControl := ACIA+0
-ACIAStatus := ACIA+0
-ACIAData := ACIA+1
+IO_DATA      = $FF70
+IO_STATUS    = $FF71
+IO_DDR_DATA  = $FF72
+IO_DDR_CTRL  = $FF73
+IO_RD        = %00000001
+IO_WR        = %00000010
+PRINTPTR     = $80
+IO_KEY       = $82                           ; ZP Last key pressed
 
-CTRL := $FF00
+IO_INIT:
+                LDA     #$FF                    ;
+                STA     IO_DDR_DATA             ; UART All output (default)
+                LDA     #$03                    ;
+                STA     IO_DDR_CTRL             ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
+                RTS
 
-printptr = $80
-
-; Output character in A and return.
 IO_ECHO:
-	PHA
-SerialOutWait:
-	LDA	ACIAStatus
-	AND	#2
-	CMP	#2
-	BNE	SerialOutWait
-	PLA
-	STA	ACIAData
-	RTS
+                BIT     IO_STATUS               ; Wait for output to be ready
+                BMI     IO_ECHO
+IO_OUT:
+                STA     IO_DATA                 ; Output Character to UART
+                PHA
+                LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+                STA     IO_STATUS
+                LDA     #IO_WR                  ; Write (active low)
+                STA     IO_STATUS
+                LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+                STA     IO_STATUS
+                PLA
+                RTS                             ; Return.
+
+IO_INKEY:
+                BIT     IO_STATUS               ; Wait for keypress
+                BVS     IO_INKEY
+IO_IN:
+                LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
+                STA     IO_DDR_DATA
+                LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
+                STA     IO_STATUS
+                LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+                STA     IO_KEY                  ; SAVE DATA
+                LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
+                STA     IO_STATUS
+                LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
+                STA     IO_DDR_DATA
+                LDA     IO_KEY                  ; RESTORE KEYPESS
+                RTS
 
 IO_IMM:
-	pha
-    phx
-    phy
+                PHA
+                PHX
+                PHY
 
-	tsx
-	clc
-	lda $0104,x
-    adc #1
-    sta printptr
-	lda $0105,x
-    adc #0
-    sta printptr+1
+                TSX
+                CLC
+                LDA $0104,X
+                ADC #1
+                STA PRINTPTR
+                LDA $0105,X
+                ADC #0
+                STA PRINTPTR+1
 
-	jsr printmsgloop
+                JSR PRINTMSGLOOP
 
-	lda printptr
-    sta $0104,x
-	lda printptr+1
-    sta $0105,x
+                LDA PRINTPTR
+                STA $0104,X
+                LDA PRINTPTR+1
+                STA $0105,X
 
-	ply
-    plx
-    pla
-	rts
+                PLY
+                PLX
+                PLA
+                RTS
 
-printmsgloop:
-	ldy #0
-	lda (printptr),y
-	beq endprintmsgloop
-	jsr IO_ECHO
-	inc printptr
-	bne printmsgloop
-	inc printptr+1
-	bra printmsgloop
+PRINTMSGLOOP:
+                LDY #0
+                LDA (PRINTPTR),Y
+                BEQ ENDPRINTMSGLOOP
+                JSR IO_ECHO
+                INC PRINTPTR
+                BNE PRINTMSGLOOP
+                INC PRINTPTR+1
+                BRA PRINTMSGLOOP
 
-endprintmsgloop:
-	rts
-
-
-; Wait for key and return code in A
-IO_KEY:
-    LDA	    ACIAStatus
-    AND	    #1
-    CMP	    #1
-    BNE     IO_KEY
-    LDA	    ACIAData
-    RTS
-
-; Get next key press in A and set Carry.
-; If no key then clear carry and return zero in A.
-IO_INKEY:
-    LDA	    ACIAStatus
-    AND	    #1
-    CMP	    #1
-    BNE     NoKey
-    LDA	    ACIAData
-    SEC
-    RTS
-NoKey:
-    LDA     #0
-    CLC
-    RTS
-
-VGA_CLR:
-	stz CTRL
-	lda #$80
-	sta printptr+1
-	stz printptr
-
-vga_clr_loop1:
-	lda #$AA
-	sta (printptr)
-	inc printptr
-	bne vga_clr_loop1
-	inc printptr+1
-	lda printptr+1
-	cmp #$C0
-	bne vga_clr_loop1
-
-	lda #$FF
-	sta CTRL
-	lda #$80
-	sta printptr+1
-	stz printptr
-vga_clr_loop2:
-	lda #0
-	sta (printptr)
-	inc printptr
-	bne vga_clr_loop2
-	inc printptr+1
-	lda printptr+1
-	cmp #$C0
-	bne vga_clr_loop2
-
-	rts
+ENDPRINTMSGLOOP:
+                RTS

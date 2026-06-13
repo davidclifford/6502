@@ -1,5 +1,5 @@
 ; --- Zero Page Variables ---
-        .org $90
+        .org $B0
 X1:      ds 2
 Y1:      ds 1 ; (1 byte)
 X2:      ds 2 ; (2 bytes)
@@ -13,6 +13,8 @@ STEPY:   ds 1 ; (1 byte)  1 or -1
 SCR_PTR: ds 2 ; (2 bytes)
 TEMP_H:  ds 1 ;
 XSHFT:   ds 2 ;
+col = $A0
+row = $A1
 
 x1 = 0
 y1 = 0
@@ -20,26 +22,59 @@ x2 = 200
 y2 = 120
 
         .org $1000   ; Example start address
+        lda XSHFT
+        bne start
+        lda #55
+        sta XSHFT
 start:
-        lda #<x1
+        jsr RAND
+        lda XSHFT
         sta X1
-        lda #>x1
-        sta X1+1
+        stz X1+1
 
-        lda #y1
+        jsr RAND
+        lda XSHFT
+        lsr
         sta Y1
 
-        lda #<x2
+        jsr RAND
+        lda XSHFT
         sta X2
-        lda #>x2
-        sta X2+1
+        stz X2+1
 
-        lda #y2
+        jsr RAND
+        lda XSHFT
+        lsr
         sta Y2
 
         JSR LINE
 
-;        BRA start
+        lda XSHFT
+        inc
+        bne start
+
+        jsr $2000
+        bra start
+
+        RTS
+
+CLS:
+        stz row
+        stz col
+        lda #$80
+        sta SCR_PTR+1
+        stz SCR_PTR
+
+        vga_clr_loop0:
+        lda #0
+        STA (SCR_PTR)
+
+        inc SCR_PTR
+        bne vga_clr_loop0
+        inc SCR_PTR+1
+        lda SCR_PTR+1
+        cmp #$C0
+        bne vga_clr_loop0
         RTS
 
 LINE:
@@ -243,3 +278,17 @@ PLOT_PIXEL:
 ; Place this at the very end of your source file
 BIT_TABLE:
     db $80, $40, $20, $10, $08, $04, $02, $01
+
+RAND:
+        LDA     XSHFT+1
+        ROR
+        LDA     XSHFT
+        ROR
+        EOR     XSHFT+1
+        STA     XSHFT+1
+        ROR
+        EOR     XSHFT
+        STA     XSHFT
+        EOR     XSHFT+1
+        STA     XSHFT+1
+        RTS

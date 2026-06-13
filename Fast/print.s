@@ -3,7 +3,7 @@
 count=$95
 
 start:
-	lda #17
+	lda #10
 	sta count
 again:
     lda #0
@@ -22,6 +22,8 @@ fin:
 	rts
 
 mess:
-	db "Pack my box with five dozen liquor jugs? The quick brown fox jumps over the lazy dog! ",0
+;	db "Pack my box with five dozen liquor jugs? The quick brown fox jumps over the lazy dog! "
+	db "1234567890!@#$%^&*()-_=+[{]};:',<.>/?`~",34,127
+	db "qwertyuiopasdfghjklzxcvbnm QWERTYUIOPASDFGHJKLZXCVBNM", 0
 
 	.include putchar.s

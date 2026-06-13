@@ -1,0 +1,51 @@
+Sections:
+00: "org0001:8000" (8000-8000)
+01: "org0002:f000" (F000-F024)
+
+
+Source: ".\Fast\hello_um245r.s"
+                        	     1: IO_DATA := $FF70
+                        	     2: 
+                        	     3:     .org $8000
+                        	     4: 	.org $F000
+                        	     5: Start:
+                        	     6: ; Display startup message
+01:F000 A000            	     7: 	LDY #0
+                        	     8: ShowStartMsg:
+01:F002 B913F0          	     9: 	LDA	StartupMessage,Y
+01:F005 F006            	    10: 	BEQ End
+01:F007 200FF0          	    11: 	JSR	MONCOUT
+01:F00A C8              	    12: 	INY
+01:F00B 80F5            	    13: 	BRA	ShowStartMsg
+                        	    14: End:
+01:F00D 80FE            	    15: 	BRA End
+                        	    16: 
+                        	    17: MONCOUT:
+01:F00F 8D70FF          	    18: 	STA	IO_DATA
+01:F012 60              	    19: 	RTS
+                        	    20: 
+                        	    21: StartupMessage:
+01:F013 0C              	    22: 	.byte	$0C,"Hello, World!",$0D,$0A,$00
+01:F014 48656C6C6F2C2057
+01:F01C 6F726C6421
+01:F021 0D
+01:F022 0A
+01:F023 00
+                        	    23: 
+
+
+Symbols by name:
+End                              A:F00D
+IO_DATA                          E:FF70
+MONCOUT                          A:F00F
+ShowStartMsg                     A:F002
+Start                            A:F000
+StartupMessage                   A:F013
+
+Symbols by value:
+F000 Start
+F002 ShowStartMsg
+F00D End
+F00F MONCOUT
+F013 StartupMessage
+FF70 IO_DATA

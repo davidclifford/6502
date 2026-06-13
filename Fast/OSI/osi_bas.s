@@ -86,6 +86,8 @@ GOAYINT:
 	.res 2
 GOGIVEAYF:
 	.res 2
+KEYPRESS:
+	.res 1
 
 .org ZP_START2
 Z15:
@@ -228,8 +230,8 @@ CHRGOT = <(GENERIC_CHRGOT-GENERIC_CHRGET + CHRGET)
 CHRGOT2 = <(GENERIC_CHRGOT2-GENERIC_CHRGET + CHRGET)
 RNDSEED = <(GENERIC_RNDSEED-GENERIC_CHRGET + CHRGET)
 
-.segment "PAD"
-.org $8000
+;.segment "PAD"
+;.org $8000
 .segment "CODE"
 .org $C000
 TOKEN_ADDRESS_TABLE:
@@ -5768,71 +5770,158 @@ QT_BYTES_FREE:
         .byte   "COPYRIGHT 1977 BY MICROSOFT CO."
         .byte   CR,LF,0
 
-; STARTUP AND SERIAL I/O ROUTINES ===========================================================
-; BY G. SEARLE 2013 =========================================================================
-ACIA := $FF70
-ACIAControl := ACIA+0
-ACIAStatus := ACIA+0
-ACIAData := ACIA+1
+;================================================================================
+; Serial input/output
+; David Clifford 8/6/26
+;================================================================================
+
+IO_DATA      = $FF70
+IO_STATUS    = $FF71
+IO_DDR_DATA  = $FF72
+IO_DDR_CTRL  = $FF73
+IO_RD        = %00000001
+IO_WR        = %00000010
 
 .segment "IOHANDLER"
 .org $FE00
+
+MONCOUT:
+ECHO:
+		BIT     IO_STATUS               ; Wait for output to be ready
+		BMI     ECHO
+		STA     IO_DATA                 ; Output Character to UART
+		PHA
+		LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+		STA     IO_STATUS
+		LDA     #IO_WR                  ; Write (active low)
+		STA     IO_STATUS
+		LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+		STA     IO_STATUS
+		PLA
+		RTS                             ; Return.
+
+INPUTKEY:
+MONRDKEY:
+	    BIT     IO_STATUS               ; Wait for keypress
+		BVS     NOKEY
+
+		LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
+		STA     IO_DDR_DATA
+		LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
+		STA     IO_STATUS
+		LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+		STA     KEYPRESS                ; SAVE DATA
+		LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
+		STA     IO_STATUS
+		LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
+		STA     IO_DDR_DATA
+		LDA     KEYPRESS                ; RESTORE KEYPESS
+		SEC
+		RTS
+NOKEY:
+		CLC
+		RTS
+
 Reset:
-	LDX     #STACK_TOP
-	TXS
+		LDA     #$FF                    ;
+		STA IO_DDR_DATA                 ; UART All output (default)
+		LDA     #$03                    ;
+		STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
 
-	LDA 	#$96		; Set ACIA baud rate, word size and Rx interrupt (to control RTS)
-	STA	ACIAControl
-
+		LDX     #STACK_TOP
+		TXS
 ; Display startup message
-	LDY #0
+		LDY #0
 ShowStartMsg:
-	LDA	StartupMessage,Y
-	BEQ	WaitForKeypress
-	JSR	MONCOUT
-	INY
-	BNE	ShowStartMsg
+		LDA	StartupMessage,Y
+		BEQ	WaitForKeypress
+		JSR	MONCOUT
+		INY
+		BNE	ShowStartMsg
 
 ; Wait for a cold/warm start selection
 WaitForKeypress:
-	JSR	MONRDKEY
-	BCC	WaitForKeypress
+		JSR	MONRDKEY
+		BCC	WaitForKeypress
 
-	AND	#$DF			; Make upper case
-	CMP	#'W'			; compare with [W]arm start
-	BEQ	WarmStart
+		AND	#$DF			; Make upper case
+		CMP	#'W'			; compare with [W]arm start
+		BEQ	WarmStart
 
-	CMP	#'C'			; compare with [C]old start
-	BNE	Reset
+		CMP	#'C'			; compare with [C]old start
+		BNE	Reset
 
-	JMP	COLD_START	; BASIC cold start
+		JMP	COLD_START	; BASIC cold start
 
 WarmStart:
-	JMP	RESTART		; BASIC warm start
+		JMP	RESTART		; BASIC warm start
 
-MONCOUT:
-	PHA
-SerialOutWait:
-	LDA	ACIAStatus
-	AND	#2
-	CMP	#2
-	BNE	SerialOutWait
-	PLA
-	STA	ACIAData
-	RTS
 
-MONRDKEY:
-	LDA	ACIAStatus
-	AND	#1
-	CMP	#1
-	BNE	NoDataIn
-	LDA	ACIAData
-	SEC		; Carry set if key available
-	RTS
-NoDataIn:
-	CLC		; Carry clear if no key pressed
-	RTS
+;; STARTUP AND SERIAL I/O ROUTINES ===========================================================
+;; BY G. SEARLE 2013 =========================================================================
+;ACIA := $FF70
+;ACIAControl := ACIA+0
+;ACIAStatus := ACIA+0
+;ACIAData := ACIA+1
 
+;.segment "IOHANDLER"
+;.org $FE00
+;Reset:
+;	LDX     #STACK_TOP
+;	TXS
+
+;	LDA 	#$96		; Set ACIA baud rate, word size and Rx interrupt (to control RTS)
+;	STA	ACIAControl
+
+;; Display startup message
+;	LDY #0
+;ShowStartMsg:
+;	LDA	StartupMessage,Y
+;	BEQ	WaitForKeypress
+;	JSR	MONCOUT
+;	INY
+;	BNE	ShowStartMsg
+;
+;; Wait for a cold/warm start selection
+;WaitForKeypress:
+;	JSR	MONRDKEY
+;	BCC	WaitForKeypress
+;
+;	AND	#$DF			; Make upper case
+;	CMP	#'W'			; compare with [W]arm start
+;	BEQ	WarmStart
+;
+;	CMP	#'C'			; compare with [C]old start
+;	BNE	Reset
+;
+;	JMP	COLD_START	; BASIC cold start
+;
+;WarmStart:
+;	JMP	RESTART		; BASIC warm start
+;
+;MONCOUT:
+;	PHA
+;SerialOutWait:
+;	LDA	ACIAStatus
+;	AND	#2
+;	CMP	#2
+;	BNE	SerialOutWait
+;	PLA
+;	STA	ACIAData
+;	RTS
+;
+;MONRDKEY:
+;	LDA	ACIAStatus
+;	AND	#1
+;	CMP	#1
+;	BNE	NoDataIn
+;	LDA	ACIAData
+;	SEC		; Carry set if key available
+;	RTS
+;NoDataIn:
+;	CLC		; Carry clear if no key pressed
+;	RTS
+;
 MONISCNTC:
 	JSR	MONRDKEY
 	BCC	NotCTRLC ; If no key pressed then exit

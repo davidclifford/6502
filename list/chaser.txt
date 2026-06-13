@@ -1,36 +1,51 @@
 Sections:
-00: "org0001:1000" (1000-1018)
+00: "org0001:1000" (1000-1030)
 
 
-Source: ".\Examples\chaser.s"
+Source: ".\Fast\chaser.s"
                         	     1:     .org $1000
                         	     2: 
-00:1000 A901            	     3:     lda #01
-00:1002 18              	     4:     clc
-                        	     5: loop:
-00:1003 8510            	     6:     sta $0010
-00:1005 49FF            	     7:     eor #$FF
-00:1007 8518            	     8:     sta $0018
-00:1009 49FF            	     9:     eor #$FF
-00:100B 2A              	    10:     rol
-00:100C A000            	    11:     ldy #0
-                        	    12: wait2:
-00:100E A200            	    13:     ldx #0
-                        	    14: wait:
-00:1010 E8              	    15:     inx
-00:1011 D0FD            	    16:     bne wait
-00:1013 C8              	    17:     iny
-00:1014 D0F8            	    18:     bne wait2
-00:1016 80EB            	    19:     bra loop
-                        	    20: 
+                        	     3: loop:
+00:1000 201210          	     4:     jsr RAND
+00:1003 8D00FF          	     5:     sta $FF00
+00:1006 A000            	     6:     ldy #0
+                        	     7: wait2:
+00:1008 A200            	     8:     ldx #0
+                        	     9: wait:
+00:100A E8              	    10:     inx
+00:100B D0FD            	    11:     bne wait
+00:100D C8              	    12:     iny
+00:100E D0F8            	    13:     bne wait2
+00:1010 80EE            	    14:     bra loop
+                        	    15: 
+                        	    16: RAND:
+00:1012 AD2F10          	    17:         LDA     XSHFT+1
+00:1015 6A              	    18:         ROR
+00:1016 AD2E10          	    19:         LDA     XSHFT
+00:1019 6A              	    20:         ROR
+00:101A 4D2F10          	    21:         EOR     XSHFT+1
+00:101D 8D2F10          	    22:         STA     XSHFT+1
+00:1020 6A              	    23:         ROR
+00:1021 4D2E10          	    24:         EOR     XSHFT
+00:1024 8D2E10          	    25:         STA     XSHFT
+00:1027 4D2F10          	    26:         EOR     XSHFT+1
+00:102A 8D2F10          	    27:         STA     XSHFT+1
+00:102D 60              	    28:         RTS
+                        	    29: 
+00:102E 3412            	    30: XSHFT:  DW     $1234
+                        	    31: 
 
 
 Symbols by name:
-loop                             A:1003
-wait                             A:1010
-wait2                            A:100E
+RAND                             A:1012
+XSHFT                            A:102E
+loop                             A:1000
+wait                             A:100A
+wait2                            A:1008
 
 Symbols by value:
-1003 loop
-100E wait2
-1010 wait
+1000 loop
+1008 wait2
+100A wait
+1012 RAND
+102E XSHFT

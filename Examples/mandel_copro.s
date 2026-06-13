@@ -6,8 +6,8 @@ MAND_YMIN = $FF00 ; -1
 MAND_YMAX = $0200 ; 2
 
 MAND_WIDTH = 32
-MAND_HEIGHT = 22
-MAND_MAX_IT = 63
+MAND_HEIGHT = 24
+MAND_MAX_IT = 95
 
 mand_x0:       .word 0
 mand_y0:       .word 0

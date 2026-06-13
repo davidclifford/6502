@@ -1,0 +1,305 @@
+Sections:
+00: "org0001:0" (0-6)
+01: "org0002:1000" (1000-114A)
+
+
+Source: ".\Fast\sieve.s"
+                        	     1: ; The source code for the 6502 test follows.
+                        	     2:     .org $00
+00:0000 00              	     3: tmp1:   db
+00:0001 00              	     4: tmp2:   db
+00:0002 00              	     5: number: dw
+00:0003 *
+00:0004 00              	     6: index:  dw
+00:0005 *
+                        	     7: 
+                        	     8:     .org $1000
+                        	     9: direxe:
+01:1000 A90A            	    10:     lda #10
+01:1002 20D910          	    11:     jsr IO_ECHO
+01:1005 A000            	    12:     ldy #0 ; Mark all numbers as primes to begin
+01:1007 A9FF            	    13:     lda #$ff
+                        	    14: l1:
+01:1009 990003          	    15:     sta array,y
+01:100C C8              	    16:     iny
+01:100D D0FA            	    17:     bne l1
+01:100F 8403            	    18:     sty number+1 ; start with number=2
+01:1011 A902            	    19:     lda #2
+01:1013 8502            	    20:     sta number
+01:1015 A502            	    21: mbuc: lda number ; check if prime
+01:1017 8500            	    22:     sta tmp1
+01:1019 A503            	    23:     lda number+1
+01:101B 8501            	    24:     sta tmp2
+01:101D 4601            	    25:     lsr tmp2 ; y = number/8
+01:101F 6600            	    26:     ror tmp1
+01:1021 4601            	    27:     lsr tmp2
+01:1023 6600            	    28:     ror tmp1
+01:1025 4601            	    29:     lsr tmp2
+01:1027 6600            	    30:     ror tmp1
+01:1029 A400            	    31:     ldy tmp1
+01:102B A502            	    32:     lda number ; A = 1<<(number&7)
+01:102D 2907            	    33:     and #7
+01:102F AA              	    34:     tax
+01:1030 A901            	    35:     lda #1
+01:1032 E000            	    36:     cpx #0
+01:1034 F004            	    37:     beq l3
+01:1036 0A              	    38: l2: asl
+01:1037 CA              	    39:     dex
+01:1038 D0FC            	    40:     bne l2
+01:103A 390003          	    41: l3: and array,y ; check bit
+01:103D D003            	    42:     bne l35 ; not prime
+01:103F 4CBE10          	    43:     jmp nxn
+                        	    44:     ; number is prime. print it
+01:1042 A502            	    45: l35: lda number
+01:1044 8500            	    46:     sta tmp1
+01:1046 A503            	    47:     lda number+1
+01:1048 8501            	    48:     sta tmp2
+                        	    49:     ; tmp1-tmp2: data to be printed
+01:104A A000            	    50:     ldy #0
+                        	    51: prn1: ;------------- divide tmp1-tmp2 by 10. Remainder result in A
+01:104C A210            	    52:     ldx #16
+01:104E A900            	    53:     lda #0
+01:1050 0600            	    54: dv1: asl tmp1
+01:1052 2601            	    55:     rol tmp2
+01:1054 2A              	    56:     rol
+01:1055 C90A            	    57:     cmp #10
+01:1057 9004            	    58:     bcc dv2
+01:1059 E90A            	    59:     sbc #10
+01:105B E600            	    60:     inc tmp1
+01:105D CA              	    61: dv2: dex
+01:105E D0F0            	    62:     bne dv1
+                        	    63:     ;-------------
+01:1060 18              	    64:     clc
+01:1061 6930            	    65:     adc #'0'
+01:1063 48              	    66:     pha
+01:1064 C8              	    67:     iny
+01:1065 A500            	    68:     lda tmp1
+01:1067 0501            	    69:     ora tmp2
+01:1069 D0E1            	    70:     bne prn1
+                        	    71:     ;-------------
+01:106B 68              	    72: prn2: pla
+01:106C 20D910          	    73:     jsr IO_ECHO
+01:106F 88              	    74:     dey
+01:1070 D0F9            	    75:     bne prn2
+01:1072 A920            	    76:     lda #' '
+01:1074 20D910          	    77:     jsr IO_ECHO
+                        	    78:     ;--------------- Now, mark every multiple of number as not prime
+01:1077 A502            	    79:     lda number ; index=number
+01:1079 8504            	    80:     sta index
+01:107B A503            	    81:     lda number+1
+01:107D 8505            	    82:     sta index+1
+01:107F 18              	    83: buc2: clc ; index+=number
+01:1080 A504            	    84:     lda index
+01:1082 6502            	    85:     adc number
+01:1084 8504            	    86:     sta index
+01:1086 8500            	    87:     sta tmp1
+01:1088 A505            	    88:     lda index+1
+01:108A 6503            	    89:     adc number+1
+01:108C 8505            	    90:     sta index+1
+01:108E 8501            	    91:     sta tmp2
+01:1090 A907            	    92:     lda #7 ; if (index>=$800) break
+01:1092 C505            	    93:     cmp index+1
+01:1094 9028            	    94:     bcc nxn
+01:1096 4601            	    95:     lsr tmp2 ; y = index/8
+01:1098 6600            	    96:     ror tmp1
+01:109A 4601            	    97:     lsr tmp2
+01:109C 6600            	    98:     ror tmp1
+01:109E 4601            	    99:     lsr tmp2
+01:10A0 6600            	   100:     ror tmp1
+01:10A2 A400            	   101:     ldy tmp1
+01:10A4 A504            	   102:     lda index ; A = ~(1<<(number&7))
+01:10A6 2907            	   103:     and #7
+01:10A8 AA              	   104:     tax
+01:10A9 A901            	   105:     lda #1
+01:10AB E000            	   106:     cpx #0
+01:10AD F004            	   107:     beq l7
+01:10AF 0A              	   108: l6: asl
+01:10B0 CA              	   109:     dex
+01:10B1 D0FC            	   110:     bne l6
+01:10B3 49FF            	   111: l7: eor #$ff
+01:10B5 390003          	   112:     and array,y ; mark the bit
+01:10B8 990003          	   113:     sta array,y
+01:10BB 4C7F10          	   114:     jmp buc2
+01:10BE E602            	   115: nxn: inc number ; number++
+01:10C0 D002            	   116:     bne l5
+01:10C2 E603            	   117:     inc number+1
+01:10C4 A503            	   118: l5: lda number+1 ; if (number&0x7ff)!=0 continue
+01:10C6 C908            	   119:     cmp #8
+01:10C8 F003            	   120:     beq theend
+01:10CA 4C1510          	   121:     jmp mbuc
+01:10CD 60              	   122: theend: rts
+                        	   123: 
+                        	   124: array=$300 ; 256 byte array
+                        	   125: 
+                        	   126:     .include io.s
+
+Source: "io.s"
+                        	     1: IO_DATA      = $FF70
+                        	     2: IO_STATUS    = $FF71
+                        	     3: IO_DDR_DATA  = $FF72
+                        	     4: IO_DDR_CTRL  = $FF73
+                        	     5: IO_RD        = %00000001
+                        	     6: IO_WR        = %00000010
+                        	     7: PRINTPTR     = $80
+                        	     8: IO_KEY       = $82                           ; ZP Last key pressed
+                        	     9: 
+                        	    10: IO_INIT:
+01:10CE A9FF            	    11:                 LDA     #$FF                    ;
+01:10D0 8D72FF          	    12:                 STA     IO_DDR_DATA             ; UART All output (default)
+01:10D3 A903            	    13:                 LDA     #$03                    ;
+01:10D5 8D73FF          	    14:                 STA     IO_DDR_CTRL             ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=
+01:10D8 60              	    15:                 RTS
+                        	    16: 
+                        	    17: IO_ECHO:
+01:10D9 2C71FF          	    18:                 BIT     IO_STATUS               ; Wait for output to be ready
+01:10DC 30FB            	    19:                 BMI     IO_ECHO
+                        	    20: IO_OUT:
+01:10DE 8D70FF          	    21:                 STA     IO_DATA                 ; Output Character to UART
+01:10E1 48              	    22:                 PHA
+01:10E2 A903            	    23:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+01:10E4 8D71FF          	    24:                 STA     IO_STATUS
+01:10E7 A902            	    25:                 LDA     #IO_WR                  ; Write (active low)
+01:10E9 8D71FF          	    26:                 STA     IO_STATUS
+01:10EC A903            	    27:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+01:10EE 8D71FF          	    28:                 STA     IO_STATUS
+01:10F1 68              	    29:                 PLA
+01:10F2 60              	    30:                 RTS                             ; Return.
+                        	    31: 
+                        	    32: IO_INKEY:
+01:10F3 2C71FF          	    33:                 BIT     IO_STATUS               ; Wait for keypress
+01:10F6 70FB            	    34:                 BVS     IO_INKEY
+                        	    35: IO_IN:
+01:10F8 A900            	    36:                 LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
+01:10FA 8D72FF          	    37:                 STA     IO_DDR_DATA
+01:10FD A901            	    38:                 LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
+01:10FF 8D71FF          	    39:                 STA     IO_STATUS
+01:1102 AD70FF          	    40:                 LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+01:1105 8582            	    41:                 STA     IO_KEY                  ; SAVE DATA
+01:1107 A903            	    42:                 LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
+01:1109 8D71FF          	    43:                 STA     IO_STATUS
+01:110C A9FF            	    44:                 LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
+01:110E 8D72FF          	    45:                 STA     IO_DDR_DATA
+01:1111 A582            	    46:                 LDA     IO_KEY                  ; RESTORE KEYPESS
+01:1113 60              	    47:                 RTS
+                        	    48: 
+                        	    49: IO_IMM:
+01:1114 48              	    50:                 PHA
+01:1115 DA              	    51:                 PHX
+01:1116 5A              	    52:                 PHY
+                        	    53: 
+01:1117 BA              	    54:                 TSX
+01:1118 18              	    55:                 CLC
+01:1119 BD0401          	    56:                 LDA $0104,X
+01:111C 6901            	    57:                 ADC #1
+01:111E 8580            	    58:                 STA PRINTPTR
+01:1120 BD0501          	    59:                 LDA $0105,X
+01:1123 6900            	    60:                 ADC #0
+01:1125 8581            	    61:                 STA PRINTPTR+1
+                        	    62: 
+01:1127 203811          	    63:                 JSR PRINTMSGLOOP
+                        	    64: 
+01:112A A580            	    65:                 LDA PRINTPTR
+01:112C 9D0401          	    66:                 STA $0104,X
+01:112F A581            	    67:                 LDA PRINTPTR+1
+01:1131 9D0501          	    68:                 STA $0105,X
+                        	    69: 
+01:1134 7A              	    70:                 PLY
+01:1135 FA              	    71:                 PLX
+01:1136 68              	    72:                 PLA
+01:1137 60              	    73:                 RTS
+                        	    74: 
+                        	    75: PRINTMSGLOOP:
+01:1138 A000            	    76:                 LDY #0
+01:113A B180            	    77:                 LDA (PRINTPTR),Y
+01:113C F00B            	    78:                 BEQ ENDPRINTMSGLOOP
+01:113E 20D910          	    79:                 JSR IO_ECHO
+01:1141 E680            	    80:                 INC PRINTPTR
+01:1143 D0F3            	    81:                 BNE PRINTMSGLOOP
+01:1145 E681            	    82:                 INC PRINTPTR+1
+01:1147 80EF            	    83:                 BRA PRINTMSGLOOP
+                        	    84: 
+                        	    85: ENDPRINTMSGLOOP:
+01:1149 60              	    86:                 RTS
+                        	    87: 
+
+Source: ".\Fast\sieve.s"
+                        	   127: 
+
+
+Symbols by name:
+ENDPRINTMSGLOOP                  A:1149
+IO_DATA                          E:FF70
+IO_DDR_CTRL                      E:FF73
+IO_DDR_DATA                      E:FF72
+IO_ECHO                          A:10D9
+IO_IMM                           A:1114
+IO_IN                            A:10F8
+IO_INIT                          A:10CE
+IO_INKEY                         A:10F3
+IO_KEY                           E:0082
+IO_OUT                           A:10DE
+IO_RD                            E:0001
+IO_STATUS                        E:FF71
+IO_WR                            E:0002
+PRINTMSGLOOP                     A:1138
+PRINTPTR                         E:0080
+array                            E:0300
+buc2                             A:107F
+direxe                           A:1000
+dv1                              A:1050
+dv2                              A:105D
+index                            A:0004
+l1                               A:1009
+l2                               A:1036
+l3                               A:103A
+l35                              A:1042
+l5                               A:10C4
+l6                               A:10AF
+l7                               A:10B3
+mbuc                             A:1015
+number                           A:0002
+nxn                              A:10BE
+prn1                             A:104C
+prn2                             A:106B
+theend                           A:10CD
+tmp1                             A:0000
+tmp2                             A:0001
+
+Symbols by value:
+0000 tmp1
+0001 IO_RD
+0001 tmp2
+0002 IO_WR
+0002 number
+0004 index
+0080 PRINTPTR
+0082 IO_KEY
+0300 array
+1000 direxe
+1009 l1
+1015 mbuc
+1036 l2
+103A l3
+1042 l35
+104C prn1
+1050 dv1
+105D dv2
+106B prn2
+107F buc2
+10AF l6
+10B3 l7
+10BE nxn
+10C4 l5
+10CD theend
+10CE IO_INIT
+10D9 IO_ECHO
+10DE IO_OUT
+10F3 IO_INKEY
+10F8 IO_IN
+1114 IO_IMM
+1138 PRINTMSGLOOP
+1149 ENDPRINTMSGLOOP
+FF70 IO_DATA
+FF71 IO_STATUS
+FF72 IO_DDR_DATA
+FF73 IO_DDR_CTRL

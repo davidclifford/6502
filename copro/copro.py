@@ -22,7 +22,7 @@
 
 from numpy import uint8, uint16
 
-OPS = ['A*Blo', 'A*Bhi', 'A%B', 'A/B', 'AB^2 0','AB^2 1','AB^2 2','AB^2 3']
+OPS = ['A*Blo', 'A*Bhi', 'A%B', 'A/B', 'AB^2 0', 'AB^2 1', 'AB^2 2', 'AB^2 3']
 copro_rom_file = open('copro.bin', 'wb')
 
 for op in range(8):

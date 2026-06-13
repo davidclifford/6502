@@ -1,22 +1,22 @@
 Sections:
-00: "org0001:1000" (1000-10D2)
+00: "org0001:1000" (1000-10B5)
 
 
 Source: ".\Fast\rand-maze.s"
                         	     1:         .org $1000
                         	     2: 
 00:1000 A90A            	     3:         LDA     #10
-00:1002 203910          	     4:         JSR     IO_ECHO
+00:1002 204410          	     4:         JSR     IO_ECHO
                         	     5: LOOP:
 00:1005 201B10          	     6:         JSR     RAND
 00:1008 AD3810          	     7:         LDA     XSHFT+1
 00:100B 3007            	     8:         BMI     BS
 00:100D A92F            	     9:         LDA     #'/'
-00:100F 203910          	    10:         JSR     IO_ECHO
+00:100F 204410          	    10:         JSR     IO_ECHO
 00:1012 80F1            	    11:         BRA     LOOP
                         	    12: BS:
 00:1014 A95C            	    13:         LDA     #'\'
-00:1016 203910          	    14:         JSR     IO_ECHO
+00:1016 204410          	    14:         JSR     IO_ECHO
 00:1019 80EA            	    15:         BRA     LOOP
                         	    16: 
                         	    17: RAND:
@@ -38,169 +38,138 @@ Source: ".\Fast\rand-maze.s"
                         	    33:         .include    "io.s"
 
 Source: "io.s"
-                        	     1: ACIA := $FF70
-                        	     2: ACIAControl := ACIA+0
-                        	     3: ACIAStatus := ACIA+0
-                        	     4: ACIAData := ACIA+1
-                        	     5: 
-                        	     6: CTRL := $FF00
-                        	     7: 
-                        	     8: printptr = $80
+                        	     1: IO_DATA      = $FF70
+                        	     2: IO_STATUS    = $FF71
+                        	     3: IO_DDR_DATA  = $FF72
+                        	     4: IO_DDR_CTRL  = $FF73
+                        	     5: IO_RD        = %00000001
+                        	     6: IO_WR        = %00000010
+                        	     7: PRINTPTR     = $80
+                        	     8: IO_KEY       = $82                           ; ZP Last key pressed
                         	     9: 
-                        	    10: ; Output character in A and return.
-                        	    11: IO_ECHO:
-00:1039 48              	    12: 	PHA
-                        	    13: SerialOutWait:
-00:103A AD70FF          	    14: 	LDA	ACIAStatus
-00:103D 2902            	    15: 	AND	#2
-00:103F C902            	    16: 	CMP	#2
-00:1041 D0F7            	    17: 	BNE	SerialOutWait
-00:1043 68              	    18: 	PLA
-00:1044 8D71FF          	    19: 	STA	ACIAData
-00:1047 60              	    20: 	RTS
-                        	    21: 
-                        	    22: IO_IMM:
-00:1048 48              	    23: 	pha
-00:1049 DA              	    24:     phx
-00:104A 5A              	    25:     phy
-                        	    26: 
-00:104B BA              	    27: 	tsx
-00:104C 18              	    28: 	clc
-00:104D BD0401          	    29: 	lda $0104,x
-00:1050 6901            	    30:     adc #1
-00:1052 8580            	    31:     sta printptr
-00:1054 BD0501          	    32: 	lda $0105,x
-00:1057 6900            	    33:     adc #0
-00:1059 8581            	    34:     sta printptr+1
-                        	    35: 
-00:105B 206C10          	    36: 	jsr printmsgloop
-                        	    37: 
-00:105E A580            	    38: 	lda printptr
-00:1060 9D0401          	    39:     sta $0104,x
-00:1063 A581            	    40: 	lda printptr+1
-00:1065 9D0501          	    41:     sta $0105,x
-                        	    42: 
-00:1068 7A              	    43: 	ply
-00:1069 FA              	    44:     plx
-00:106A 68              	    45:     pla
-00:106B 60              	    46: 	rts
-                        	    47: 
-                        	    48: printmsgloop:
-00:106C A000            	    49: 	ldy #0
-00:106E B180            	    50: 	lda (printptr),y
-00:1070 F00B            	    51: 	beq endprintmsgloop
-00:1072 203910          	    52: 	jsr IO_ECHO
-00:1075 E680            	    53: 	inc printptr
-00:1077 D0F3            	    54: 	bne printmsgloop
-00:1079 E681            	    55: 	inc printptr+1
-00:107B 80EF            	    56: 	bra printmsgloop
-                        	    57: 
-                        	    58: endprintmsgloop:
-00:107D 60              	    59: 	rts
-                        	    60: 
-                        	    61: 
-                        	    62: ; Wait for key and return code in A
-                        	    63: IO_KEY:
-00:107E AD70FF          	    64:     LDA	    ACIAStatus
-00:1081 2901            	    65:     AND	    #1
-00:1083 C901            	    66:     CMP	    #1
-00:1085 D0F7            	    67:     BNE     IO_KEY
-00:1087 AD71FF          	    68:     LDA	    ACIAData
-00:108A 60              	    69:     RTS
-                        	    70: 
-                        	    71: ; Get next key press in A and set Carry.
-                        	    72: ; If no key then clear carry and return zero in A.
-                        	    73: IO_INKEY:
-00:108B AD70FF          	    74:     LDA	    ACIAStatus
-00:108E 2901            	    75:     AND	    #1
-00:1090 C901            	    76:     CMP	    #1
-00:1092 D005            	    77:     BNE     NoKey
-00:1094 AD71FF          	    78:     LDA	    ACIAData
-00:1097 38              	    79:     SEC
-00:1098 60              	    80:     RTS
-                        	    81: NoKey:
-00:1099 A900            	    82:     LDA     #0
-00:109B 18              	    83:     CLC
-00:109C 60              	    84:     RTS
-                        	    85: 
-                        	    86: VGA_CLR:
-00:109D 9C00FF          	    87: 	stz CTRL
-00:10A0 A980            	    88: 	lda #$80
-00:10A2 8581            	    89: 	sta printptr+1
-00:10A4 6480            	    90: 	stz printptr
-                        	    91: 
-                        	    92: vga_clr_loop1:
-00:10A6 A900            	    93: 	lda #0
-00:10A8 9280            	    94: 	sta (printptr)
-00:10AA E680            	    95: 	inc printptr
-00:10AC D0F8            	    96: 	bne vga_clr_loop1
-00:10AE E681            	    97: 	inc printptr+1
-00:10B0 A581            	    98: 	lda printptr+1
-00:10B2 C9C0            	    99: 	cmp #$C0
-00:10B4 D0F0            	   100: 	bne vga_clr_loop1
-                        	   101: 
-00:10B6 A9FF            	   102: 	lda #$FF
-00:10B8 8D00FF          	   103: 	sta CTRL
-00:10BB A980            	   104: 	lda #$80
-00:10BD 8581            	   105: 	sta printptr+1
-00:10BF 6480            	   106: 	stz printptr
-                        	   107: vga_clr_loop2:
-00:10C1 A900            	   108: 	lda #0
-00:10C3 9280            	   109: 	sta (printptr)
-00:10C5 E680            	   110: 	inc printptr
-00:10C7 D0F8            	   111: 	bne vga_clr_loop2
-00:10C9 E681            	   112: 	inc printptr+1
-00:10CB A581            	   113: 	lda printptr+1
-00:10CD C9C0            	   114: 	cmp #$C0
-00:10CF D0F0            	   115: 	bne vga_clr_loop2
-                        	   116: 
-00:10D1 60              	   117: 	rts
-                        	   118: 
+                        	    10: IO_INIT:
+00:1039 A9FF            	    11:                 LDA     #$FF                    ;
+00:103B 8D72FF          	    12:                 STA     IO_DDR_DATA             ; UART All output (default)
+00:103E A903            	    13:                 LDA     #$03                    ;
+00:1040 8D73FF          	    14:                 STA     IO_DDR_CTRL             ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=
+00:1043 60              	    15:                 RTS
+                        	    16: 
+                        	    17: IO_ECHO:
+00:1044 2C71FF          	    18:                 BIT     IO_STATUS               ; Wait for output to be ready
+00:1047 30FB            	    19:                 BMI     IO_ECHO
+                        	    20: IO_OUT:
+00:1049 8D70FF          	    21:                 STA     IO_DATA                 ; Output Character to UART
+00:104C 48              	    22:                 PHA
+00:104D A903            	    23:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+00:104F 8D71FF          	    24:                 STA     IO_STATUS
+00:1052 A902            	    25:                 LDA     #IO_WR                  ; Write (active low)
+00:1054 8D71FF          	    26:                 STA     IO_STATUS
+00:1057 A903            	    27:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+00:1059 8D71FF          	    28:                 STA     IO_STATUS
+00:105C 68              	    29:                 PLA
+00:105D 60              	    30:                 RTS                             ; Return.
+                        	    31: 
+                        	    32: IO_INKEY:
+00:105E 2C71FF          	    33:                 BIT     IO_STATUS               ; Wait for keypress
+00:1061 70FB            	    34:                 BVS     IO_INKEY
+                        	    35: IO_IN:
+00:1063 A900            	    36:                 LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
+00:1065 8D72FF          	    37:                 STA     IO_DDR_DATA
+00:1068 A901            	    38:                 LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
+00:106A 8D71FF          	    39:                 STA     IO_STATUS
+00:106D AD70FF          	    40:                 LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+00:1070 8582            	    41:                 STA     IO_KEY                  ; SAVE DATA
+00:1072 A903            	    42:                 LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
+00:1074 8D71FF          	    43:                 STA     IO_STATUS
+00:1077 A9FF            	    44:                 LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
+00:1079 8D72FF          	    45:                 STA     IO_DDR_DATA
+00:107C A582            	    46:                 LDA     IO_KEY                  ; RESTORE KEYPESS
+00:107E 60              	    47:                 RTS
+                        	    48: 
+                        	    49: IO_IMM:
+00:107F 48              	    50:                 PHA
+00:1080 DA              	    51:                 PHX
+00:1081 5A              	    52:                 PHY
+                        	    53: 
+00:1082 BA              	    54:                 TSX
+00:1083 18              	    55:                 CLC
+00:1084 BD0401          	    56:                 LDA $0104,X
+00:1087 6901            	    57:                 ADC #1
+00:1089 8580            	    58:                 STA PRINTPTR
+00:108B BD0501          	    59:                 LDA $0105,X
+00:108E 6900            	    60:                 ADC #0
+00:1090 8581            	    61:                 STA PRINTPTR+1
+                        	    62: 
+00:1092 20A310          	    63:                 JSR PRINTMSGLOOP
+                        	    64: 
+00:1095 A580            	    65:                 LDA PRINTPTR
+00:1097 9D0401          	    66:                 STA $0104,X
+00:109A A581            	    67:                 LDA PRINTPTR+1
+00:109C 9D0501          	    68:                 STA $0105,X
+                        	    69: 
+00:109F 7A              	    70:                 PLY
+00:10A0 FA              	    71:                 PLX
+00:10A1 68              	    72:                 PLA
+00:10A2 60              	    73:                 RTS
+                        	    74: 
+                        	    75: PRINTMSGLOOP:
+00:10A3 A000            	    76:                 LDY #0
+00:10A5 B180            	    77:                 LDA (PRINTPTR),Y
+00:10A7 F00B            	    78:                 BEQ ENDPRINTMSGLOOP
+00:10A9 204410          	    79:                 JSR IO_ECHO
+00:10AC E680            	    80:                 INC PRINTPTR
+00:10AE D0F3            	    81:                 BNE PRINTMSGLOOP
+00:10B0 E681            	    82:                 INC PRINTPTR+1
+00:10B2 80EF            	    83:                 BRA PRINTMSGLOOP
+                        	    84: 
+                        	    85: ENDPRINTMSGLOOP:
+00:10B4 60              	    86:                 RTS
+                        	    87: 
 
 Source: ".\Fast\rand-maze.s"
                         	    34: 
 
 
 Symbols by name:
-ACIA                             E:FF70
-ACIAData                         E:FF71
-ACIAStatus                       E:FF70
 BS                               A:1014
-CTRL                             E:FF00
-IO_ECHO                          A:1039
-IO_IMM                           A:1048
-IO_INKEY                         A:108B
-IO_KEY                           A:107E
+ENDPRINTMSGLOOP                  A:10B4
+IO_DATA                          E:FF70
+IO_DDR_CTRL                      E:FF73
+IO_DDR_DATA                      E:FF72
+IO_ECHO                          A:1044
+IO_IMM                           A:107F
+IO_IN                            A:1063
+IO_INIT                          A:1039
+IO_INKEY                         A:105E
+IO_KEY                           E:0082
+IO_OUT                           A:1049
+IO_RD                            E:0001
+IO_STATUS                        E:FF71
+IO_WR                            E:0002
 LOOP                             A:1005
-NoKey                            A:1099
+PRINTMSGLOOP                     A:10A3
+PRINTPTR                         E:0080
 RAND                             A:101B
-SerialOutWait                    A:103A
-VGA_CLR                          A:109D
 XSHFT                            A:1037
-endprintmsgloop                  A:107D
-printmsgloop                     A:106C
-printptr                         E:0080
-vga_clr_loop1                    A:10A6
-vga_clr_loop2                    A:10C1
 
 Symbols by value:
-0080 printptr
+0001 IO_RD
+0002 IO_WR
+0080 PRINTPTR
+0082 IO_KEY
 1005 LOOP
 1014 BS
 101B RAND
 1037 XSHFT
-1039 IO_ECHO
-103A SerialOutWait
-1048 IO_IMM
-106C printmsgloop
-107D endprintmsgloop
-107E IO_KEY
-108B IO_INKEY
-1099 NoKey
-109D VGA_CLR
-10A6 vga_clr_loop1
-10C1 vga_clr_loop2
-FF00 CTRL
-FF70 ACIA
-FF70 ACIAStatus
-FF71 ACIAData
+1039 IO_INIT
+1044 IO_ECHO
+1049 IO_OUT
+105E IO_INKEY
+1063 IO_IN
+107F IO_IMM
+10A3 PRINTMSGLOOP
+10B4 ENDPRINTMSGLOOP
+FF70 IO_DATA
+FF71 IO_STATUS
+FF72 IO_DDR_DATA
+FF73 IO_DDR_CTRL

@@ -1,5 +1,5 @@
 Sections:
-00: "org0001:1000" (1000-148D)
+00: "org0001:1000" (1000-14B7)
 
 
 Source: ".\Fast\mandelbrot.s"
@@ -8,115 +8,119 @@ Source: ".\Fast\mandelbrot.s"
                         	     3: 
                         	     4:     ; Start
 00:1000 A90A            	     5:     lda #10
-00:1002 202A10          	     6:     jsr IO_ECHO
+00:1002 203510          	     6:     jsr IO_ECHO
                         	     7: 
 00:1005 A000            	     8:     ldy #0
                         	     9: loopy:
 00:1007 A200            	    10:     ldx #0
                         	    11: loopx:
-00:1009 202613          	    12:     jsr mand_get
+00:1009 205013          	    12:     jsr mand_get
 00:100C 18              	    13:     clc
 00:100D 6920            	    14:     adc #' '
-00:100F 202A10          	    15:     jsr IO_ECHO
-00:1012 202A10          	    16:     jsr IO_ECHO
+00:100F 203510          	    15:     jsr IO_ECHO
+00:1012 203510          	    16:     jsr IO_ECHO
 00:1015 E8              	    17:     inx
 00:1016 E020            	    18:     cpx #MAND_WIDTH
 00:1018 D0EF            	    19:     bne loopx
 00:101A A90A            	    20:     lda #10
-00:101C 202A10          	    21:     jsr IO_ECHO
+00:101C 203510          	    21:     jsr IO_ECHO
 00:101F C8              	    22:     iny
 00:1020 C018            	    23:     cpy #MAND_HEIGHT
 00:1022 D0E3            	    24:     bne loopy
 00:1024 A90A            	    25:     lda #10
-00:1026 202A10          	    26:     jsr IO_ECHO
+00:1026 203510          	    26:     jsr IO_ECHO
 00:1029 60              	    27:     rts
                         	    28: 
                         	    29:     .include io.s
 
 Source: "io.s"
-                        	     1: ACIA := $FF70
-                        	     2: ACIAControl := ACIA+0
-                        	     3: ACIAStatus := ACIA+0
-                        	     4: ACIAData := ACIA+1
-                        	     5: 
-                        	     6: printptr = $80
-                        	     7: 
-                        	     8: ; Output character in A and return.
-                        	     9: IO_ECHO:
-00:102A 48              	    10: 	PHA
-                        	    11: SerialOutWait:
-00:102B AD70FF          	    12: 	LDA	ACIAStatus
-00:102E 2902            	    13: 	AND	#2
-00:1030 C902            	    14: 	CMP	#2
-00:1032 D0F7            	    15: 	BNE	SerialOutWait
-00:1034 68              	    16: 	PLA
-00:1035 8D71FF          	    17: 	STA	ACIAData
-00:1038 60              	    18: 	RTS
-                        	    19: 
-                        	    20: IO_IMM:
-00:1039 48              	    21: 	pha
-00:103A DA              	    22:     phx
-00:103B 5A              	    23:     phy
-                        	    24: 
-00:103C BA              	    25: 	tsx
-00:103D 18              	    26: 	clc
-00:103E BD0401          	    27: 	lda $0104,x
-00:1041 6901            	    28:     adc #1
-00:1043 8580            	    29:     sta printptr
-00:1045 BD0501          	    30: 	lda $0105,x
-00:1048 6900            	    31:     adc #0
-00:104A 8581            	    32:     sta printptr+1
-                        	    33: 
-00:104C 205D10          	    34: 	jsr printmsgloop
-                        	    35: 
-00:104F A580            	    36: 	lda printptr
-00:1051 9D0401          	    37:     sta $0104,x
-00:1054 A581            	    38: 	lda printptr+1
-00:1056 9D0501          	    39:     sta $0105,x
-                        	    40: 
-00:1059 7A              	    41: 	ply
-00:105A FA              	    42:     plx
-00:105B 68              	    43:     pla
-00:105C 60              	    44: 	rts
-                        	    45: 
-                        	    46: printmsgloop:
-00:105D A000            	    47: 	ldy #0
-00:105F B180            	    48: 	lda (printptr),y
-00:1061 F00B            	    49: 	beq endprintmsgloop
-00:1063 202A10          	    50: 	jsr IO_ECHO
-00:1066 E680            	    51: 	inc printptr
-00:1068 D0F3            	    52: 	bne printmsgloop
-00:106A E681            	    53: 	inc printptr+1
-00:106C 80EF            	    54: 	bra printmsgloop
-                        	    55: 
-                        	    56: endprintmsgloop:
-00:106E 60              	    57: 	rts
-                        	    58: 
-                        	    59: 
-                        	    60: ; Wait for key and return code in A
-                        	    61: IO_KEY:
-00:106F AD70FF          	    62:     LDA	    ACIAStatus
-00:1072 2901            	    63:     AND	    #1
-00:1074 C901            	    64:     CMP	    #1
-00:1076 D0F7            	    65:     BNE     IO_KEY
-00:1078 AD71FF          	    66:     LDA	    ACIAData
-00:107B 60              	    67:     RTS
-                        	    68: 
-                        	    69: ; Get next key press in A and set Carry.
-                        	    70: ; If no key then clear carry and return zero in A.
-                        	    71: IO_INKEY:
-00:107C AD70FF          	    72:     LDA	    ACIAStatus
-00:107F 2901            	    73:     AND	    #1
-00:1081 C901            	    74:     CMP	    #1
-00:1083 D005            	    75:     BNE     NoKey
-00:1085 AD71FF          	    76:     LDA	    ACIAData
-00:1088 38              	    77:     SEC
-00:1089 60              	    78:     RTS
-                        	    79: NoKey:
-00:108A A900            	    80:     LDA     #0
-00:108C 18              	    81:     CLC
-00:108D 60              	    82:     RTS
-                        	    83: 
+                        	     1: IO_DATA      = $FF70
+                        	     2: IO_STATUS    = $FF71
+                        	     3: IO_DDR_DATA  = $FF72
+                        	     4: IO_DDR_CTRL  = $FF73
+                        	     5: IO_RD        = %00000001
+                        	     6: IO_WR        = %00000010
+                        	     7: PRINTPTR     = $80
+                        	     8: IO_KEY       = $82                           ; ZP Last key pressed
+                        	     9: 
+                        	    10: IO_INIT:
+00:102A A9FF            	    11:                 LDA     #$FF                    ;
+00:102C 8D72FF          	    12:                 STA     IO_DDR_DATA             ; UART All output (default)
+00:102F A903            	    13:                 LDA     #$03                    ;
+00:1031 8D73FF          	    14:                 STA     IO_DDR_CTRL             ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=
+00:1034 60              	    15:                 RTS
+                        	    16: 
+                        	    17: IO_ECHO:
+00:1035 2C71FF          	    18:                 BIT     IO_STATUS               ; Wait for output to be ready
+00:1038 30FB            	    19:                 BMI     IO_ECHO
+                        	    20: IO_OUT:
+00:103A 8D70FF          	    21:                 STA     IO_DATA                 ; Output Character to UART
+00:103D 48              	    22:                 PHA
+00:103E A903            	    23:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+00:1040 8D71FF          	    24:                 STA     IO_STATUS
+00:1043 A902            	    25:                 LDA     #IO_WR                  ; Write (active low)
+00:1045 8D71FF          	    26:                 STA     IO_STATUS
+00:1048 A903            	    27:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+00:104A 8D71FF          	    28:                 STA     IO_STATUS
+00:104D 68              	    29:                 PLA
+00:104E 60              	    30:                 RTS                             ; Return.
+                        	    31: 
+                        	    32: IO_INKEY:
+00:104F 2C71FF          	    33:                 BIT     IO_STATUS               ; Wait for keypress
+00:1052 70FB            	    34:                 BVS     IO_INKEY
+                        	    35: IO_IN:
+00:1054 A900            	    36:                 LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
+00:1056 8D72FF          	    37:                 STA     IO_DDR_DATA
+00:1059 A901            	    38:                 LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
+00:105B 8D71FF          	    39:                 STA     IO_STATUS
+00:105E AD70FF          	    40:                 LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+00:1061 8582            	    41:                 STA     IO_KEY                  ; SAVE DATA
+00:1063 A903            	    42:                 LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
+00:1065 8D71FF          	    43:                 STA     IO_STATUS
+00:1068 A9FF            	    44:                 LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
+00:106A 8D72FF          	    45:                 STA     IO_DDR_DATA
+00:106D A582            	    46:                 LDA     IO_KEY                  ; RESTORE KEYPESS
+00:106F 60              	    47:                 RTS
+                        	    48: 
+                        	    49: IO_IMM:
+00:1070 48              	    50:                 PHA
+00:1071 DA              	    51:                 PHX
+00:1072 5A              	    52:                 PHY
+                        	    53: 
+00:1073 BA              	    54:                 TSX
+00:1074 18              	    55:                 CLC
+00:1075 BD0401          	    56:                 LDA $0104,X
+00:1078 6901            	    57:                 ADC #1
+00:107A 8580            	    58:                 STA PRINTPTR
+00:107C BD0501          	    59:                 LDA $0105,X
+00:107F 6900            	    60:                 ADC #0
+00:1081 8581            	    61:                 STA PRINTPTR+1
+                        	    62: 
+00:1083 209410          	    63:                 JSR PRINTMSGLOOP
+                        	    64: 
+00:1086 A580            	    65:                 LDA PRINTPTR
+00:1088 9D0401          	    66:                 STA $0104,X
+00:108B A581            	    67:                 LDA PRINTPTR+1
+00:108D 9D0501          	    68:                 STA $0105,X
+                        	    69: 
+00:1090 7A              	    70:                 PLY
+00:1091 FA              	    71:                 PLX
+00:1092 68              	    72:                 PLA
+00:1093 60              	    73:                 RTS
+                        	    74: 
+                        	    75: PRINTMSGLOOP:
+00:1094 A000            	    76:                 LDY #0
+00:1096 B180            	    77:                 LDA (PRINTPTR),Y
+00:1098 F00B            	    78:                 BEQ ENDPRINTMSGLOOP
+00:109A 203510          	    79:                 JSR IO_ECHO
+00:109D E680            	    80:                 INC PRINTPTR
+00:109F D0F3            	    81:                 BNE PRINTMSGLOOP
+00:10A1 E681            	    82:                 INC PRINTPTR+1
+00:10A3 80EF            	    83:                 BRA PRINTMSGLOOP
+                        	    84: 
+                        	    85: ENDPRINTMSGLOOP:
+00:10A5 60              	    86:                 RTS
+                        	    87: 
 
 Source: ".\Fast\mandelbrot.s"
                         	    30:     .include mandel.s
@@ -130,26 +134,26 @@ Source: "fixedpt.s"
                         	     3: FP_C = $F0
                         	     4: FP_R = $F2
                         	     5: 
-                        	     6: CP_A = $10
-                        	     7: CP_B = $18
-                        	     8: CP_ML = $00
-                        	     9: CP_MH = $01
-                        	    10: CP_MD = $02
-                        	    11: CP_DV = $03
-                        	    12: CP_S0 = $04
-                        	    13: CP_S1 = $05
-                        	    14: CP_S2 = $06
-                        	    15: CP_S3 = $07
+                        	     6: CP_A = $FF00
+                        	     7: CP_B = $FF01
+                        	     8: CP_ML = $FF10
+                        	     9: CP_MH = $FF11
+                        	    10: CP_MD = $FF12
+                        	    11: CP_DV = $FF13
+                        	    12: CP_S0 = $FF14
+                        	    13: CP_S1 = $FF15
+                        	    14: CP_S2 = $FF16
+                        	    15: CP_S3 = $FF17
                         	    16: 
                         	    17: fp_lda_byte:  ;FP_A = A
-00:108E 85FC            	    18:    sta FP_A+1
-00:1090 64FB            	    19:    stz FP_A
-00:1092 60              	    20:    rts
+00:10A6 85FC            	    18:    sta FP_A+1
+00:10A8 64FB            	    19:    stz FP_A
+00:10AA 60              	    20:    rts
                         	    21: 
                         	    22: fp_ldb_byte: ; FP_B = A
-00:1093 85FE            	    23:    sta FP_B+1
-00:1095 64FD            	    24:    stz FP_B
-00:1097 60              	    25:    rts
+00:10AB 85FE            	    23:    sta FP_B+1
+00:10AD 64FD            	    24:    stz FP_B
+00:10AF 60              	    25:    rts
                         	    26: 
                         	    27: FP_LDA .macro addr
                         	    28:    lda \addr
@@ -199,30 +203,30 @@ Source: "fixedpt.s"
                         	    72: .endmacro
                         	    73: 
                         	    74: fp_floor_byte: ; A = floor(FP_C)
-00:1098 A5F1            	    75:    lda FP_C+1
-00:109A 2980            	    76:    and #$80
-00:109C F00C            	    77:    beq return$
-00:109E A5F0            	    78:    lda FP_C
-00:10A0 C900            	    79:    cmp #0
-00:10A2 D003            	    80:    bne decc$
-00:10A4 A5F1            	    81:    lda FP_C+1
-00:10A6 60              	    82:    rts
+00:10B0 A5F1            	    75:    lda FP_C+1
+00:10B2 2980            	    76:    and #$80
+00:10B4 F00C            	    77:    beq return$
+00:10B6 A5F0            	    78:    lda FP_C
+00:10B8 C900            	    79:    cmp #0
+00:10BA D003            	    80:    bne decc$
+00:10BC A5F1            	    81:    lda FP_C+1
+00:10BE 60              	    82:    rts
                         	    83: decc$:
-00:10A7 A5F0            	    84:    lda FP_C
-00:10A9 3A              	    85:    dec
+00:10BF A5F0            	    84:    lda FP_C
+00:10C1 3A              	    85:    dec
                         	    86: return$:
-00:10AA 60              	    87:    rts
+00:10C2 60              	    87:    rts
                         	    88: 
                         	    89: fp_floor: ; FP_C = floor(FP_C)
-00:10AB 24F1            	    90:    bit FP_C+1
-00:10AD 1008            	    91:    bpl zerofrac$
-00:10AF A5F0            	    92:    lda FP_C
-00:10B1 C900            	    93:    cmp #0
-00:10B3 F002            	    94:    beq zerofrac$
-00:10B5 C6F1            	    95:    dec FP_C+1
+00:10C3 24F1            	    90:    bit FP_C+1
+00:10C5 1008            	    91:    bpl zerofrac$
+00:10C7 A5F0            	    92:    lda FP_C
+00:10C9 C900            	    93:    cmp #0
+00:10CB F002            	    94:    beq zerofrac$
+00:10CD C6F1            	    95:    dec FP_C+1
                         	    96: zerofrac$:
-00:10B7 64F0            	    97:    stz FP_C
-00:10B9 60              	    98:    rts
+00:10CF 64F0            	    97:    stz FP_C
+00:10D1 60              	    98:    rts
                         	    99: 
                         	   100: FP_TCA .macro  ; FP_A = FP_C
                         	   101:    lda FP_C
@@ -239,409 +243,409 @@ Source: "fixedpt.s"
                         	   112: .endmacro
                         	   113: 
                         	   114: fp_subtract: ; FP_C = FP_A - FP_B
-00:10BA A5FB            	   115:    lda FP_A
-00:10BC 38              	   116:    sec
-00:10BD E5FD            	   117:    sbc FP_B
-00:10BF 85F0            	   118:    sta FP_C
-00:10C1 A5FC            	   119:    lda FP_A+1
-00:10C3 E5FE            	   120:    sbc FP_B+1
-00:10C5 85F1            	   121:    sta FP_C+1
-00:10C7 60              	   122:    rts
+00:10D2 A5FB            	   115:    lda FP_A
+00:10D4 38              	   116:    sec
+00:10D5 E5FD            	   117:    sbc FP_B
+00:10D7 85F0            	   118:    sta FP_C
+00:10D9 A5FC            	   119:    lda FP_A+1
+00:10DB E5FE            	   120:    sbc FP_B+1
+00:10DD 85F1            	   121:    sta FP_C+1
+00:10DF 60              	   122:    rts
                         	   123: 
                         	   124: fp_add: ; FP_C = FP_A + FP_B
-00:10C8 A5FB            	   125:    lda FP_A
-00:10CA 18              	   126:    clc
-00:10CB 65FD            	   127:    adc FP_B
-00:10CD 85F0            	   128:    sta FP_C
-00:10CF A5FC            	   129:    lda FP_A+1
-00:10D1 65FE            	   130:    adc FP_B+1
-00:10D3 85F1            	   131:    sta FP_C+1
-00:10D5 60              	   132:    rts
+00:10E0 A5FB            	   125:    lda FP_A
+00:10E2 18              	   126:    clc
+00:10E3 65FD            	   127:    adc FP_B
+00:10E5 85F0            	   128:    sta FP_C
+00:10E7 A5FC            	   129:    lda FP_A+1
+00:10E9 65FE            	   130:    adc FP_B+1
+00:10EB 85F1            	   131:    sta FP_C+1
+00:10ED 60              	   132:    rts
                         	   133: 
                         	   134: fp_divide: ; FP_C = FP_A / FP_B; FP_R = FP_A % FP_B
-00:10D6 DA              	   135:    phx
-00:10D7 5A              	   136:    phy
-00:10D8 A5FD            	   137:    lda FP_B
-00:10DA 48              	   138:    pha
-00:10DB A5FE            	   139:    lda FP_B+1
-00:10DD 48              	   140:    pha ; preserve original B on stack
-00:10DE 24FC            	   141:    bit FP_A+1
-00:10E0 300A            	   142:    bmi abs_a$
-00:10E2 A5FB            	   143:    lda FP_A
-00:10E4 85F0            	   144:    sta FP_C
-00:10E6 A5FC            	   145:    lda FP_A+1
-00:10E8 85F1            	   146:    sta FP_C+1
-00:10EA 800D            	   147:    bra check_sign_b$
+00:10EE DA              	   135:    phx
+00:10EF 5A              	   136:    phy
+00:10F0 A5FD            	   137:    lda FP_B
+00:10F2 48              	   138:    pha
+00:10F3 A5FE            	   139:    lda FP_B+1
+00:10F5 48              	   140:    pha ; preserve original B on stack
+00:10F6 24FC            	   141:    bit FP_A+1
+00:10F8 300A            	   142:    bmi abs_a$
+00:10FA A5FB            	   143:    lda FP_A
+00:10FC 85F0            	   144:    sta FP_C
+00:10FE A5FC            	   145:    lda FP_A+1
+00:1100 85F1            	   146:    sta FP_C+1
+00:1102 800D            	   147:    bra check_sign_b$
                         	   148: abs_a$:
-00:10EC A900            	   149:    lda #0
-00:10EE 38              	   150:    sec
-00:10EF E5FB            	   151:    sbc FP_A
-00:10F1 85F0            	   152:    sta FP_C
-00:10F3 A900            	   153:    lda #0
-00:10F5 E5FC            	   154:    sbc FP_A+1
-00:10F7 85F1            	   155:    sta FP_C+1 ; C = |A|
+00:1104 A900            	   149:    lda #0
+00:1106 38              	   150:    sec
+00:1107 E5FB            	   151:    sbc FP_A
+00:1109 85F0            	   152:    sta FP_C
+00:110B A900            	   153:    lda #0
+00:110D E5FC            	   154:    sbc FP_A+1
+00:110F 85F1            	   155:    sta FP_C+1 ; C = |A|
                         	   156: check_sign_b$:
-00:10F9 24FE            	   157:    bit FP_B+1
-00:10FB 100D            	   158:    bpl shift_b$
-00:10FD A900            	   159:    lda #0
-00:10FF 38              	   160:    sec
-00:1100 E5FD            	   161:    sbc FP_B
-00:1102 85FD            	   162:    sta FP_B
-00:1104 A900            	   163:    lda #0
-00:1106 E5FE            	   164:    sbc FP_B+1
-00:1108 85FE            	   165:    sta FP_B+1
+00:1111 24FE            	   157:    bit FP_B+1
+00:1113 100D            	   158:    bpl shift_b$
+00:1115 A900            	   159:    lda #0
+00:1117 38              	   160:    sec
+00:1118 E5FD            	   161:    sbc FP_B
+00:111A 85FD            	   162:    sta FP_B
+00:111C A900            	   163:    lda #0
+00:111E E5FE            	   164:    sbc FP_B+1
+00:1120 85FE            	   165:    sta FP_B+1
                         	   166: shift_b$:
-00:110A A5FE            	   167:    lda FP_B+1
-00:110C 85FD            	   168:    sta FP_B
-00:110E A900            	   169:    lda #0
-00:1110 85FE            	   170:    sta FP_B+1
-00:1112 64F2            	   171:    stz FP_R
-00:1114 64F3            	   172:    stz FP_R+1
-00:1116 A210            	   173:    ldx #16     ;There are 16 bits in C
+00:1122 A5FE            	   167:    lda FP_B+1
+00:1124 85FD            	   168:    sta FP_B
+00:1126 A900            	   169:    lda #0
+00:1128 85FE            	   170:    sta FP_B+1
+00:112A 64F2            	   171:    stz FP_R
+00:112C 64F3            	   172:    stz FP_R+1
+00:112E A210            	   173:    ldx #16     ;There are 16 bits in C
                         	   174: loop1$:
-00:1118 06F0            	   175:    asl FP_C    ;Shift hi bit of C into REM
-00:111A 26F1            	   176:    rol FP_C+1  ;(vacating the lo bit, which will be used for the quotient)
-00:111C 26F2            	   177:    rol FP_R
-00:111E 26F3            	   178:    rol FP_R+1
-00:1120 A5F2            	   179:    lda FP_R
-00:1122 38              	   180:    sec         ;Trial subtraction
-00:1123 E5FD            	   181:    sbc FP_B
-00:1125 A8              	   182:    tay
-00:1126 A5F3            	   183:    lda FP_R+1
-00:1128 E5FE            	   184:    sbc FP_B+1
-00:112A 9006            	   185:    bcc loop2$  ;Did subtraction succeed?
-00:112C 85F3            	   186:    sta FP_R+1   ;If yes, save it
-00:112E 84F2            	   187:    sty FP_R
-00:1130 E6F0            	   188:    inc FP_C    ;and record a 1 in the quotient
+00:1130 06F0            	   175:    asl FP_C    ;Shift hi bit of C into REM
+00:1132 26F1            	   176:    rol FP_C+1  ;(vacating the lo bit, which will be used for the quotient)
+00:1134 26F2            	   177:    rol FP_R
+00:1136 26F3            	   178:    rol FP_R+1
+00:1138 A5F2            	   179:    lda FP_R
+00:113A 38              	   180:    sec         ;Trial subtraction
+00:113B E5FD            	   181:    sbc FP_B
+00:113D A8              	   182:    tay
+00:113E A5F3            	   183:    lda FP_R+1
+00:1140 E5FE            	   184:    sbc FP_B+1
+00:1142 9006            	   185:    bcc loop2$  ;Did subtraction succeed?
+00:1144 85F3            	   186:    sta FP_R+1   ;If yes, save it
+00:1146 84F2            	   187:    sty FP_R
+00:1148 E6F0            	   188:    inc FP_C    ;and record a 1 in the quotient
                         	   189: loop2$:
-00:1132 CA              	   190:    dex
-00:1133 D0E3            	   191:    bne loop1$
-00:1135 68              	   192:    pla
-00:1136 85FE            	   193:    sta FP_B+1
-00:1138 68              	   194:    pla
-00:1139 85FD            	   195:    sta FP_B
-00:113B 24FE            	   196:    bit FP_B+1
-00:113D 3006            	   197:    bmi check_cancel$
-00:113F 24FC            	   198:    bit FP_A+1
-00:1141 3006            	   199:    bmi negative$
-00:1143 8011            	   200:    bra return$
+00:114A CA              	   190:    dex
+00:114B D0E3            	   191:    bne loop1$
+00:114D 68              	   192:    pla
+00:114E 85FE            	   193:    sta FP_B+1
+00:1150 68              	   194:    pla
+00:1151 85FD            	   195:    sta FP_B
+00:1153 24FE            	   196:    bit FP_B+1
+00:1155 3006            	   197:    bmi check_cancel$
+00:1157 24FC            	   198:    bit FP_A+1
+00:1159 3006            	   199:    bmi negative$
+00:115B 8011            	   200:    bra return$
                         	   201: check_cancel$:
-00:1145 24FC            	   202:    bit FP_A+1
-00:1147 300D            	   203:    bmi return$
+00:115D 24FC            	   202:    bit FP_A+1
+00:115F 300D            	   203:    bmi return$
                         	   204: negative$:
-00:1149 A900            	   205:    lda #0
-00:114B 38              	   206:    sec
-00:114C E5F0            	   207:    sbc FP_C
-00:114E 85F0            	   208:    sta FP_C
-00:1150 A900            	   209:    lda #0
-00:1152 E5F1            	   210:    sbc FP_C+1
-00:1154 85F1            	   211:    sta FP_C+1
+00:1161 A900            	   205:    lda #0
+00:1163 38              	   206:    sec
+00:1164 E5F0            	   207:    sbc FP_C
+00:1166 85F0            	   208:    sta FP_C
+00:1168 A900            	   209:    lda #0
+00:116A E5F1            	   210:    sbc FP_C+1
+00:116C 85F1            	   211:    sta FP_C+1
                         	   212: return$:
-00:1156 7A              	   213:    ply
-00:1157 FA              	   214:    plx
-00:1158 60              	   215:    rts
+00:116E 7A              	   213:    ply
+00:116F FA              	   214:    plx
+00:1170 60              	   215:    rts
                         	   216: 
                         	   217: fp_multiply: ; FP_C = FP_A * FP_B; FP_R overflow
-00:1159 DA              	   218:    phx
-00:115A 5A              	   219:    phy
+00:1171 DA              	   218:    phx
+00:1172 5A              	   219:    phy
                         	   220:    ; push original A and B to stack
-00:115B A5FB            	   221:    lda FP_A
-00:115D 48              	   222:    pha
-00:115E A5FC            	   223:    lda FP_A+1
-00:1160 48              	   224:    pha
-00:1161 A5FD            	   225:    lda FP_B
-00:1163 48              	   226:    pha
-00:1164 A5FE            	   227:    lda FP_B+1
-00:1166 48              	   228:    pha
-00:1167 24FC            	   229:    bit FP_A+1
-00:1169 100D            	   230:    bpl check_sign_b$
-00:116B A900            	   231:    lda #0
-00:116D 38              	   232:    sec
-00:116E E5FB            	   233:    sbc FP_A
-00:1170 85FB            	   234:    sta FP_A
-00:1172 A900            	   235:    lda #0
-00:1174 E5FC            	   236:    sbc FP_A+1
-00:1176 85FC            	   237:    sta FP_A+1 ; A = |A|
+00:1173 A5FB            	   221:    lda FP_A
+00:1175 48              	   222:    pha
+00:1176 A5FC            	   223:    lda FP_A+1
+00:1178 48              	   224:    pha
+00:1179 A5FD            	   225:    lda FP_B
+00:117B 48              	   226:    pha
+00:117C A5FE            	   227:    lda FP_B+1
+00:117E 48              	   228:    pha
+00:117F 24FC            	   229:    bit FP_A+1
+00:1181 100D            	   230:    bpl check_sign_b$
+00:1183 A900            	   231:    lda #0
+00:1185 38              	   232:    sec
+00:1186 E5FB            	   233:    sbc FP_A
+00:1188 85FB            	   234:    sta FP_A
+00:118A A900            	   235:    lda #0
+00:118C E5FC            	   236:    sbc FP_A+1
+00:118E 85FC            	   237:    sta FP_A+1 ; A = |A|
                         	   238: check_sign_b$:
-00:1178 24FE            	   239:    bit FP_B+1
-00:117A 100D            	   240:    bpl init_c$
-00:117C A900            	   241:    lda #0
-00:117E 38              	   242:    sec
-00:117F E5FD            	   243:    sbc FP_B
-00:1181 85FD            	   244:    sta FP_B
-00:1183 A900            	   245:    lda #0
-00:1185 E5FE            	   246:    sbc FP_B+1
-00:1187 85FE            	   247:    sta FP_B+1 ; B = |B|
+00:1190 24FE            	   239:    bit FP_B+1
+00:1192 100D            	   240:    bpl init_c$
+00:1194 A900            	   241:    lda #0
+00:1196 38              	   242:    sec
+00:1197 E5FD            	   243:    sbc FP_B
+00:1199 85FD            	   244:    sta FP_B
+00:119B A900            	   245:    lda #0
+00:119D E5FE            	   246:    sbc FP_B+1
+00:119F 85FE            	   247:    sta FP_B+1 ; B = |B|
                         	   248: init_c$:
-00:1189 A900            	   249:    lda #0
-00:118B 85F2            	   250:    sta FP_R
-00:118D 85F0            	   251:    sta FP_C
-00:118F 85F1            	   252:    sta FP_C+1
-00:1191 A210            	   253:    ldx #16
+00:11A1 A900            	   249:    lda #0
+00:11A3 85F2            	   250:    sta FP_R
+00:11A5 85F0            	   251:    sta FP_C
+00:11A7 85F1            	   252:    sta FP_C+1
+00:11A9 A210            	   253:    ldx #16
                         	   254: loop1$:
-00:1193 46FE            	   255:    lsr FP_B+1
-00:1195 66FD            	   256:    ror FP_B
-00:1197 900B            	   257:    bcc loop2$
-00:1199 A8              	   258:    tay
-00:119A 18              	   259:    clc
-00:119B A5FB            	   260:    lda FP_A
-00:119D 65F2            	   261:    adc FP_R
-00:119F 85F2            	   262:    sta FP_R
-00:11A1 98              	   263:    tya
-00:11A2 65FC            	   264:    adc FP_A+1
+00:11AB 46FE            	   255:    lsr FP_B+1
+00:11AD 66FD            	   256:    ror FP_B
+00:11AF 900B            	   257:    bcc loop2$
+00:11B1 A8              	   258:    tay
+00:11B2 18              	   259:    clc
+00:11B3 A5FB            	   260:    lda FP_A
+00:11B5 65F2            	   261:    adc FP_R
+00:11B7 85F2            	   262:    sta FP_R
+00:11B9 98              	   263:    tya
+00:11BA 65FC            	   264:    adc FP_A+1
                         	   265: loop2$:
-00:11A4 6A              	   266:    ror
-00:11A5 66F2            	   267:    ror FP_R
-00:11A7 66F1            	   268:    ror FP_C+1
-00:11A9 66F0            	   269:    ror FP_C
-00:11AB CA              	   270:    dex
-00:11AC D0E5            	   271:    bne loop1$
-00:11AE 85F3            	   272:    sta FP_R+1
-00:11B0 A208            	   273:    ldx #8
+00:11BC 6A              	   266:    ror
+00:11BD 66F2            	   267:    ror FP_R
+00:11BF 66F1            	   268:    ror FP_C+1
+00:11C1 66F0            	   269:    ror FP_C
+00:11C3 CA              	   270:    dex
+00:11C4 D0E5            	   271:    bne loop1$
+00:11C6 85F3            	   272:    sta FP_R+1
+00:11C8 A208            	   273:    ldx #8
                         	   274: loop3$:
-00:11B2 46F3            	   275:    lsr FP_R+1
-00:11B4 66F2            	   276:    ror FP_R
-00:11B6 66F1            	   277:    ror FP_C+1
-00:11B8 66F0            	   278:    ror FP_C
-00:11BA CA              	   279:    dex
-00:11BB D0F5            	   280:    bne loop3$
+00:11CA 46F3            	   275:    lsr FP_R+1
+00:11CC 66F2            	   276:    ror FP_R
+00:11CE 66F1            	   277:    ror FP_C+1
+00:11D0 66F0            	   278:    ror FP_C
+00:11D2 CA              	   279:    dex
+00:11D3 D0F5            	   280:    bne loop3$
                         	   281:    ; restore A and B
-00:11BD 68              	   282:    pla
-00:11BE 85FE            	   283:    sta FP_B+1
-00:11C0 68              	   284:    pla
-00:11C1 85FD            	   285:    sta FP_B
-00:11C3 68              	   286:    pla
-00:11C4 85FC            	   287:    sta FP_A+1
-00:11C6 68              	   288:    pla
-00:11C7 85FB            	   289:    sta FP_A
-00:11C9 24FE            	   290:    bit FP_B+1
-00:11CB 3006            	   291:    bmi check_cancel$
-00:11CD 24FC            	   292:    bit FP_A+1
-00:11CF 3006            	   293:    bmi negative$
-00:11D1 8011            	   294:    bra return$
+00:11D5 68              	   282:    pla
+00:11D6 85FE            	   283:    sta FP_B+1
+00:11D8 68              	   284:    pla
+00:11D9 85FD            	   285:    sta FP_B
+00:11DB 68              	   286:    pla
+00:11DC 85FC            	   287:    sta FP_A+1
+00:11DE 68              	   288:    pla
+00:11DF 85FB            	   289:    sta FP_A
+00:11E1 24FE            	   290:    bit FP_B+1
+00:11E3 3006            	   291:    bmi check_cancel$
+00:11E5 24FC            	   292:    bit FP_A+1
+00:11E7 3006            	   293:    bmi negative$
+00:11E9 8011            	   294:    bra return$
                         	   295: check_cancel$:
-00:11D3 24FC            	   296:    bit FP_A+1
-00:11D5 300D            	   297:    bmi return$
+00:11EB 24FC            	   296:    bit FP_A+1
+00:11ED 300D            	   297:    bmi return$
                         	   298: negative$:
-00:11D7 A900            	   299:    lda #0
-00:11D9 38              	   300:    sec
-00:11DA E5F0            	   301:    sbc FP_C
-00:11DC 85F0            	   302:    sta FP_C
-00:11DE A900            	   303:    lda #0
-00:11E0 E5F1            	   304:    sbc FP_C+1
-00:11E2 85F1            	   305:    sta FP_C+1
+00:11EF A900            	   299:    lda #0
+00:11F1 38              	   300:    sec
+00:11F2 E5F0            	   301:    sbc FP_C
+00:11F4 85F0            	   302:    sta FP_C
+00:11F6 A900            	   303:    lda #0
+00:11F8 E5F1            	   304:    sbc FP_C+1
+00:11FA 85F1            	   305:    sta FP_C+1
                         	   306: return$:
-00:11E4 7A              	   307:    ply
-00:11E5 FA              	   308:    plx
-00:11E6 60              	   309:    rts
+00:11FC 7A              	   307:    ply
+00:11FD FA              	   308:    plx
+00:11FE 60              	   309:    rts
                         	   310: 
                         	   311: ; Optimised version of SQUARE FP_A, only have to check neg at start, no need to neg at end as squares are ALWAYS positv
                         	   312: fp_square: ; FP_C = FP_A * FP_A; FP_R overflow
-00:11E7 DA              	   313:    phx
-00:11E8 5A              	   314:    phy
+00:11FF DA              	   313:    phx
+00:1200 5A              	   314:    phy
                         	   315:    ; push original FP_A to stack & copy to FP_B
-00:11E9 A5FB            	   316:    lda FP_A
-00:11EB 85FD            	   317:    sta FP_B
-00:11ED 48              	   318:    pha
-00:11EE A5FC            	   319:    lda FP_A+1
-00:11F0 85FE            	   320:    sta FP_B+1
-00:11F2 48              	   321:    pha
-00:11F3 24FC            	   322:    bit FP_A+1
-00:11F5 1011            	   323:    bpl init_c$
-00:11F7 A900            	   324:    lda #0
-00:11F9 38              	   325:    sec
-00:11FA E5FB            	   326:    sbc FP_A
-00:11FC 85FB            	   327:    sta FP_A
-00:11FE 85FD            	   328:    sta FP_B
-00:1200 A900            	   329:    lda #0
-00:1202 E5FC            	   330:    sbc FP_A+1
-00:1204 85FC            	   331:    sta FP_A+1 ; A = |A|
-00:1206 85FE            	   332:    sta FP_B+1 ; B = |A|
+00:1201 A5FB            	   316:    lda FP_A
+00:1203 85FD            	   317:    sta FP_B
+00:1205 48              	   318:    pha
+00:1206 A5FC            	   319:    lda FP_A+1
+00:1208 85FE            	   320:    sta FP_B+1
+00:120A 48              	   321:    pha
+00:120B 24FC            	   322:    bit FP_A+1
+00:120D 1011            	   323:    bpl init_c$
+00:120F A900            	   324:    lda #0
+00:1211 38              	   325:    sec
+00:1212 E5FB            	   326:    sbc FP_A
+00:1214 85FB            	   327:    sta FP_A
+00:1216 85FD            	   328:    sta FP_B
+00:1218 A900            	   329:    lda #0
+00:121A E5FC            	   330:    sbc FP_A+1
+00:121C 85FC            	   331:    sta FP_A+1 ; A = |A|
+00:121E 85FE            	   332:    sta FP_B+1 ; B = |A|
                         	   333: init_c$:
-00:1208 A900            	   334:    lda #0
-00:120A 85F2            	   335:    sta FP_R
-00:120C 85F0            	   336:    sta FP_C
-00:120E 85F1            	   337:    sta FP_C+1
-00:1210 A210            	   338:    ldx #16
+00:1220 A900            	   334:    lda #0
+00:1222 85F2            	   335:    sta FP_R
+00:1224 85F0            	   336:    sta FP_C
+00:1226 85F1            	   337:    sta FP_C+1
+00:1228 A210            	   338:    ldx #16
                         	   339: loop1$:
-00:1212 46FE            	   340:    lsr FP_B+1
-00:1214 66FD            	   341:    ror FP_B
-00:1216 900B            	   342:    bcc loop2$
-00:1218 A8              	   343:    tay
-00:1219 18              	   344:    clc
-00:121A A5FB            	   345:    lda FP_A
-00:121C 65F2            	   346:    adc FP_R
-00:121E 85F2            	   347:    sta FP_R
-00:1220 98              	   348:    tya
-00:1221 65FC            	   349:    adc FP_A+1
+00:122A 46FE            	   340:    lsr FP_B+1
+00:122C 66FD            	   341:    ror FP_B
+00:122E 900B            	   342:    bcc loop2$
+00:1230 A8              	   343:    tay
+00:1231 18              	   344:    clc
+00:1232 A5FB            	   345:    lda FP_A
+00:1234 65F2            	   346:    adc FP_R
+00:1236 85F2            	   347:    sta FP_R
+00:1238 98              	   348:    tya
+00:1239 65FC            	   349:    adc FP_A+1
                         	   350: loop2$:
-00:1223 6A              	   351:    ror
-00:1224 66F2            	   352:    ror FP_R
-00:1226 66F1            	   353:    ror FP_C+1
-00:1228 66F0            	   354:    ror FP_C
-00:122A CA              	   355:    dex
-00:122B D0E5            	   356:    bne loop1$
-00:122D 85F3            	   357:    sta FP_R+1
-00:122F A208            	   358:    ldx #8
+00:123B 6A              	   351:    ror
+00:123C 66F2            	   352:    ror FP_R
+00:123E 66F1            	   353:    ror FP_C+1
+00:1240 66F0            	   354:    ror FP_C
+00:1242 CA              	   355:    dex
+00:1243 D0E5            	   356:    bne loop1$
+00:1245 85F3            	   357:    sta FP_R+1
+00:1247 A208            	   358:    ldx #8
                         	   359: loop3$:
-00:1231 46F3            	   360:    lsr FP_R+1
-00:1233 66F2            	   361:    ror FP_R
-00:1235 66F1            	   362:    ror FP_C+1
-00:1237 66F0            	   363:    ror FP_C
-00:1239 CA              	   364:    dex
-00:123A D0F5            	   365:    bne loop3$
+00:1249 46F3            	   360:    lsr FP_R+1
+00:124B 66F2            	   361:    ror FP_R
+00:124D 66F1            	   362:    ror FP_C+1
+00:124F 66F0            	   363:    ror FP_C
+00:1251 CA              	   364:    dex
+00:1252 D0F5            	   365:    bne loop3$
                         	   366:    ; restore A
-00:123C 68              	   367:    pla
-00:123D 85FC            	   368:    sta FP_A+1
-00:123F 68              	   369:    pla
-00:1240 85FB            	   370:    sta FP_A
+00:1254 68              	   367:    pla
+00:1255 85FC            	   368:    sta FP_A+1
+00:1257 68              	   369:    pla
+00:1258 85FB            	   370:    sta FP_A
                         	   371: return$:
-00:1242 7A              	   372:    ply
-00:1243 FA              	   373:    plx
-00:1244 60              	   374:    rts
+00:125A 7A              	   372:    ply
+00:125B FA              	   373:    plx
+00:125C 60              	   374:    rts
                         	   375: 
                         	   376: cp_multiply: ; FP_C = FP_A * FP_B; FP_R overflow
-00:1245 DA              	   377:    phx
-00:1246 5A              	   378:    phy
+00:125D DA              	   377:    phx
+00:125E 5A              	   378:    phy
                         	   379:    ; push original A and B to stack
-00:1247 A5FB            	   380:    lda FP_A
-00:1249 48              	   381:    pha
-00:124A A5FC            	   382:    lda FP_A+1
-00:124C 48              	   383:    pha
-00:124D A5FD            	   384:    lda FP_B
-00:124F 48              	   385:    pha
-00:1250 A5FE            	   386:    lda FP_B+1
-00:1252 48              	   387:    pha
-00:1253 24FC            	   388:    bit FP_A+1
-00:1255 100D            	   389:    bpl check_sign_b$
-00:1257 A900            	   390:    lda #0
-00:1259 38              	   391:    sec
-00:125A E5FB            	   392:    sbc FP_A
-00:125C 85FB            	   393:    sta FP_A
-00:125E A900            	   394:    lda #0
-00:1260 E5FC            	   395:    sbc FP_A+1
-00:1262 85FC            	   396:    sta FP_A+1 ; A = |A|
+00:125F A5FB            	   380:    lda FP_A
+00:1261 48              	   381:    pha
+00:1262 A5FC            	   382:    lda FP_A+1
+00:1264 48              	   383:    pha
+00:1265 A5FD            	   384:    lda FP_B
+00:1267 48              	   385:    pha
+00:1268 A5FE            	   386:    lda FP_B+1
+00:126A 48              	   387:    pha
+00:126B 24FC            	   388:    bit FP_A+1
+00:126D 100D            	   389:    bpl check_sign_b$
+00:126F A900            	   390:    lda #0
+00:1271 38              	   391:    sec
+00:1272 E5FB            	   392:    sbc FP_A
+00:1274 85FB            	   393:    sta FP_A
+00:1276 A900            	   394:    lda #0
+00:1278 E5FC            	   395:    sbc FP_A+1
+00:127A 85FC            	   396:    sta FP_A+1 ; A = |A|
                         	   397: check_sign_b$:
-00:1264 24FE            	   398:    bit FP_B+1
-00:1266 100D            	   399:    bpl init_c$
-00:1268 A900            	   400:    lda #0
-00:126A 38              	   401:    sec
-00:126B E5FD            	   402:    sbc FP_B
-00:126D 85FD            	   403:    sta FP_B
-00:126F A900            	   404:    lda #0
-00:1271 E5FE            	   405:    sbc FP_B+1
-00:1273 85FE            	   406:    sta FP_B+1 ; B = |B|
+00:127C 24FE            	   398:    bit FP_B+1
+00:127E 100D            	   399:    bpl init_c$
+00:1280 A900            	   400:    lda #0
+00:1282 38              	   401:    sec
+00:1283 E5FD            	   402:    sbc FP_B
+00:1285 85FD            	   403:    sta FP_B
+00:1287 A900            	   404:    lda #0
+00:1289 E5FE            	   405:    sbc FP_B+1
+00:128B 85FE            	   406:    sta FP_B+1 ; B = |B|
                         	   407: init_c$:
                         	   408: ; The magic happens here
                         	   409:    ; Init C and R
-00:1275 A5FB            	   410:    lda FP_A
-00:1277 8510            	   411:    sta CP_A
-00:1279 A5FD            	   412:    lda FP_B
-00:127B 8518            	   413:    sta CP_B
-00:127D A501            	   414:    lda CP_MH
-00:127F 85F0            	   415:    sta FP_C
+00:128D A5FB            	   410:    lda FP_A
+00:128F 8D00FF          	   411:    sta CP_A
+00:1292 A5FD            	   412:    lda FP_B
+00:1294 8D01FF          	   413:    sta CP_B
+00:1297 AD11FF          	   414:    lda CP_MH
+00:129A 85F0            	   415:    sta FP_C
                         	   416: 
-00:1281 A5FC            	   417:    lda FP_A+1
-00:1283 8510            	   418:    sta CP_A
-00:1285 18              	   419:    clc
-00:1286 A5F0            	   420:    lda FP_C
-00:1288 6500            	   421:    adc CP_ML
-00:128A 85F0            	   422:    sta FP_C
-00:128C A900            	   423:    lda #0
-00:128E 6501            	   424:    adc CP_MH
-00:1290 85F1            	   425:    sta FP_C+1
+00:129C A5FC            	   417:    lda FP_A+1
+00:129E 8D00FF          	   418:    sta CP_A
+00:12A1 18              	   419:    clc
+00:12A2 A5F0            	   420:    lda FP_C
+00:12A4 6D10FF          	   421:    adc CP_ML
+00:12A7 85F0            	   422:    sta FP_C
+00:12A9 A900            	   423:    lda #0
+00:12AB 6D11FF          	   424:    adc CP_MH
+00:12AE 85F1            	   425:    sta FP_C+1
                         	   426: 
-00:1292 A5FB            	   427:    lda FP_A
-00:1294 8510            	   428:    sta CP_A
-00:1296 A5FE            	   429:    lda FP_B+1
-00:1298 8518            	   430:    sta CP_B
-00:129A 18              	   431:    clc
-00:129B A5F0            	   432:    lda FP_C
-00:129D 6500            	   433:    adc CP_ML
-00:129F 85F0            	   434:    sta FP_C
-00:12A1 A5F1            	   435:    lda FP_C+1
-00:12A3 6501            	   436:    adc CP_MH
-00:12A5 85F1            	   437:    sta FP_C+1
+00:12B0 A5FB            	   427:    lda FP_A
+00:12B2 8D00FF          	   428:    sta CP_A
+00:12B5 A5FE            	   429:    lda FP_B+1
+00:12B7 8D01FF          	   430:    sta CP_B
+00:12BA 18              	   431:    clc
+00:12BB A5F0            	   432:    lda FP_C
+00:12BD 6D10FF          	   433:    adc CP_ML
+00:12C0 85F0            	   434:    sta FP_C
+00:12C2 A5F1            	   435:    lda FP_C+1
+00:12C4 6D11FF          	   436:    adc CP_MH
+00:12C7 85F1            	   437:    sta FP_C+1
                         	   438: 
-00:12A7 A5FC            	   439:    lda FP_A+1
-00:12A9 8510            	   440:    sta CP_A
-00:12AB 18              	   441:    clc
-00:12AC A5F1            	   442:    lda FP_C+1
-00:12AE 6500            	   443:    adc CP_ML
-00:12B0 85F1            	   444:    sta FP_C+1
-00:12B2 A900            	   445:    lda #0
-00:12B4 6501            	   446:    adc CP_MH
-00:12B6 85F2            	   447:    sta FP_R
+00:12C9 A5FC            	   439:    lda FP_A+1
+00:12CB 8D00FF          	   440:    sta CP_A
+00:12CE 18              	   441:    clc
+00:12CF A5F1            	   442:    lda FP_C+1
+00:12D1 6D10FF          	   443:    adc CP_ML
+00:12D4 85F1            	   444:    sta FP_C+1
+00:12D6 A900            	   445:    lda #0
+00:12D8 6D11FF          	   446:    adc CP_MH
+00:12DB 85F2            	   447:    sta FP_R
                         	   448:    ; restore A and B
-00:12B8 68              	   449:    pla
-00:12B9 85FE            	   450:    sta FP_B+1
-00:12BB 68              	   451:    pla
-00:12BC 85FD            	   452:    sta FP_B
-00:12BE 68              	   453:    pla
-00:12BF 85FC            	   454:    sta FP_A+1
-00:12C1 68              	   455:    pla
-00:12C2 85FB            	   456:    sta FP_A
-00:12C4 24FE            	   457:    bit FP_B+1
-00:12C6 3006            	   458:    bmi check_cancel$
-00:12C8 24FC            	   459:    bit FP_A+1
-00:12CA 3006            	   460:    bmi negative$
-00:12CC 8011            	   461:    bra return$
+00:12DD 68              	   449:    pla
+00:12DE 85FE            	   450:    sta FP_B+1
+00:12E0 68              	   451:    pla
+00:12E1 85FD            	   452:    sta FP_B
+00:12E3 68              	   453:    pla
+00:12E4 85FC            	   454:    sta FP_A+1
+00:12E6 68              	   455:    pla
+00:12E7 85FB            	   456:    sta FP_A
+00:12E9 24FE            	   457:    bit FP_B+1
+00:12EB 3006            	   458:    bmi check_cancel$
+00:12ED 24FC            	   459:    bit FP_A+1
+00:12EF 3006            	   460:    bmi negative$
+00:12F1 8011            	   461:    bra return$
                         	   462: check_cancel$:
-00:12CE 24FC            	   463:    bit FP_A+1
-00:12D0 300D            	   464:    bmi return$
+00:12F3 24FC            	   463:    bit FP_A+1
+00:12F5 300D            	   464:    bmi return$
                         	   465: negative$:
-00:12D2 A900            	   466:    lda #0
-00:12D4 38              	   467:    sec
-00:12D5 E5F0            	   468:    sbc FP_C
-00:12D7 85F0            	   469:    sta FP_C
-00:12D9 A900            	   470:    lda #0
-00:12DB E5F1            	   471:    sbc FP_C+1
-00:12DD 85F1            	   472:    sta FP_C+1
+00:12F7 A900            	   466:    lda #0
+00:12F9 38              	   467:    sec
+00:12FA E5F0            	   468:    sbc FP_C
+00:12FC 85F0            	   469:    sta FP_C
+00:12FE A900            	   470:    lda #0
+00:1300 E5F1            	   471:    sbc FP_C+1
+00:1302 85F1            	   472:    sta FP_C+1
                         	   473: return$:
-00:12DF 7A              	   474:    ply
-00:12E0 FA              	   475:    plx
-00:12E1 60              	   476:    rts
+00:1304 7A              	   474:    ply
+00:1305 FA              	   475:    plx
+00:1306 60              	   476:    rts
                         	   477: 
                         	   478: ; Use co-pro lookup for squares: $10 MSB $18 LSB. result $04,$05,$06,$07 LSB to MSB
                         	   479: cp_square:
-00:12E2 DA              	   480:    phx
-00:12E3 5A              	   481:    phy
+00:1307 DA              	   480:    phx
+00:1308 5A              	   481:    phy
                         	   482:    ; push original FP_A to stack & copy to FP_B
-00:12E4 A5FB            	   483:    lda FP_A
-00:12E6 48              	   484:    pha
-00:12E7 A5FC            	   485:    lda FP_A+1
-00:12E9 48              	   486:    pha
+00:1309 A5FB            	   483:    lda FP_A
+00:130B 48              	   484:    pha
+00:130C A5FC            	   485:    lda FP_A+1
+00:130E 48              	   486:    pha
                         	   487:    ; Make A positive
-00:12EA 24FC            	   488:    bit FP_A+1
-00:12EC 100D            	   489:    bpl square_c$
-00:12EE A900            	   490:    lda #0
-00:12F0 38              	   491:    sec
-00:12F1 E5FB            	   492:    sbc FP_A
-00:12F3 85FB            	   493:    sta FP_A
-00:12F5 A900            	   494:    lda #0
-00:12F7 E5FC            	   495:    sbc FP_A+1
-00:12F9 85FC            	   496:    sta FP_A+1 ; A = |A|
+00:130F 24FC            	   488:    bit FP_A+1
+00:1311 100D            	   489:    bpl square_c$
+00:1313 A900            	   490:    lda #0
+00:1315 38              	   491:    sec
+00:1316 E5FB            	   492:    sbc FP_A
+00:1318 85FB            	   493:    sta FP_A
+00:131A A900            	   494:    lda #0
+00:131C E5FC            	   495:    sbc FP_A+1
+00:131E 85FC            	   496:    sta FP_A+1 ; A = |A|
                         	   497: square_c$:
-00:12FB A5FB            	   498:    lda FP_A
-00:12FD 8518            	   499:    sta CP_B
-00:12FF A5FC            	   500:    lda FP_A+1
-00:1301 8510            	   501:    sta CP_A
+00:1320 A5FB            	   498:    lda FP_A
+00:1322 8D01FF          	   499:    sta CP_B
+00:1325 A5FC            	   500:    lda FP_A+1
+00:1327 8D00FF          	   501:    sta CP_A
                         	   502: 
-00:1303 A505            	   503:    lda CP_S1
-00:1305 85F0            	   504:    sta FP_C
-00:1307 A506            	   505:    lda CP_S2
-00:1309 85F1            	   506:    sta FP_C+1
-00:130B A507            	   507:    lda CP_S3
-00:130D 85F2            	   508:    sta FP_R
+00:132A AD15FF          	   503:    lda CP_S1
+00:132D 85F0            	   504:    sta FP_C
+00:132F AD16FF          	   505:    lda CP_S2
+00:1332 85F1            	   506:    sta FP_C+1
+00:1334 AD17FF          	   507:    lda CP_S3
+00:1337 85F2            	   508:    sta FP_R
                         	   509: 
-00:130F 68              	   510:    pla
-00:1310 85FC            	   511:    sta FP_A+1
-00:1312 68              	   512:    pla
-00:1313 85FB            	   513:    sta FP_A
+00:1339 68              	   510:    pla
+00:133A 85FC            	   511:    sta FP_A+1
+00:133C 68              	   512:    pla
+00:133D 85FB            	   513:    sta FP_A
                         	   514: return$:
-00:1315 7A              	   515:    ply
-00:1316 FA              	   516:    plx
-00:1317 60              	   517:    rts
+00:133F 7A              	   515:    ply
+00:1340 FA              	   516:    plx
+00:1341 60              	   517:    rts
                         	   518: 
 
 Source: "mandel.s"
@@ -655,208 +659,208 @@ Source: "mandel.s"
                         	     9: MAND_HEIGHT = 24
                         	    10: MAND_MAX_IT = 15
                         	    11: 
-00:1318 0000            	    12: mand_x0:       .word 0
-00:131A 0000            	    13: mand_y0:       .word 0
-00:131C 0000            	    14: mand_x:        .word 0
-00:131E 0000            	    15: mand_y:        .word 0
-00:1320 0000            	    16: mand_x2:       .word 0
-00:1322 0000            	    17: mand_y2:       .word 0
-00:1324 0000            	    18: mand_xtemp:    .word 0
+00:1342 0000            	    12: mand_x0:       .word 0
+00:1344 0000            	    13: mand_y0:       .word 0
+00:1346 0000            	    14: mand_x:        .word 0
+00:1348 0000            	    15: mand_y:        .word 0
+00:134A 0000            	    16: mand_x2:       .word 0
+00:134C 0000            	    17: mand_y2:       .word 0
+00:134E 0000            	    18: mand_xtemp:    .word 0
                         	    19: 
                         	    20: ; Input:
                         	    21: ;  X,Y - bitmap coordinates
                         	    22: ; Output: A - # iterations executed (0 to MAND_MAX_IT-1)
                         	    23: mand_get:
-00:1326 DA              	    24:    phx
-00:1327 5A              	    25:    phy
-00:1328 8A              	    26:    txa
-00:1329 208E10          	    27:    jsr fp_lda_byte   ; A = X coordinate
+00:1350 DA              	    24:    phx
+00:1351 5A              	    25:    phy
+00:1352 8A              	    26:    txa
+00:1353 20A610          	    27:    jsr fp_lda_byte   ; A = X coordinate
                         	    28:    FP_LDB_IMM MAND_XMAX  ; B = max scaled X
-00:132C A980            	     1M    lda #<MAND_XMAX  
-00:132E 85FD            	     2M    sta FP_B
-00:1330 A903            	     3M    lda #>MAND_XMAX  
-00:1332 85FE            	     4M    sta FP_B+1
-00:1334 205911          	    29:    jsr fp_multiply   ; C = A*B
+00:1356 A980            	     1M    lda #<MAND_XMAX  
+00:1358 85FD            	     2M    sta FP_B
+00:135A A903            	     3M    lda #>MAND_XMAX  
+00:135C 85FE            	     4M    sta FP_B+1
+00:135E 207111          	    29:    jsr fp_multiply   ; C = A*B
                         	    30:    FP_TCA            ; A = C (X*Xmax)
-00:1337 A5F0            	     1M    lda FP_C
-00:1339 85FB            	     2M    sta FP_A
-00:133B A5F1            	     3M    lda FP_C+1
-00:133D 85FC            	     4M    sta FP_A+1
+00:1361 A5F0            	     1M    lda FP_C
+00:1363 85FB            	     2M    sta FP_A
+00:1365 A5F1            	     3M    lda FP_C+1
+00:1367 85FC            	     4M    sta FP_A+1
                         	    31:    FP_LDB_IMM_INT MAND_WIDTH ; B = width
-00:133F 64FD            	     1M    stz FP_B
-00:1341 A920            	     2M    lda #MAND_WIDTH 
-00:1343 85FE            	     3M    sta FP_B+1
-00:1345 20D610          	    32:    jsr fp_divide     ; C = A/B
+00:1369 64FD            	     1M    stz FP_B
+00:136B A920            	     2M    lda #MAND_WIDTH 
+00:136D 85FE            	     3M    sta FP_B+1
+00:136F 20EE10          	    32:    jsr fp_divide     ; C = A/B
                         	    33:    FP_TCA            ; A = C (scaled X with zero min)
-00:1348 A5F0            	     1M    lda FP_C
-00:134A 85FB            	     2M    sta FP_A
-00:134C A5F1            	     3M    lda FP_C+1
-00:134E 85FC            	     4M    sta FP_A+1
+00:1372 A5F0            	     1M    lda FP_C
+00:1374 85FB            	     2M    sta FP_A
+00:1376 A5F1            	     3M    lda FP_C+1
+00:1378 85FC            	     4M    sta FP_A+1
                         	    34:    FP_LDB_IMM MAND_XMIN  ; B = min scaled X
-00:1350 A980            	     1M    lda #<MAND_XMIN  
-00:1352 85FD            	     2M    sta FP_B
-00:1354 A9FD            	     3M    lda #>MAND_XMIN  
-00:1356 85FE            	     4M    sta FP_B+1
-00:1358 20C810          	    35:    jsr fp_add        ; C = A+B (scaled X)
+00:137A A980            	     1M    lda #<MAND_XMIN  
+00:137C 85FD            	     2M    sta FP_B
+00:137E A9FD            	     3M    lda #>MAND_XMIN  
+00:1380 85FE            	     4M    sta FP_B+1
+00:1382 20E010          	    35:    jsr fp_add        ; C = A+B (scaled X)
                         	    36:    FP_STC mand_x0    ; x0 = C
-00:135B A5F0            	     1M    lda FP_C
-00:135D 8D1813          	     2M    sta mand_x0    
-00:1360 A5F1            	     3M    lda FP_C+1
-00:1362 8D1913          	     4M    sta mand_x0    +1
-00:1365 68              	    37:    pla               ; retrieve Y from stack
-00:1366 48              	    38:    pha               ; put Y back on stack
-00:1367 208E10          	    39:    jsr fp_lda_byte   ; A = Y coordinate
-                        	    40:    FP_LDB_IMM MAND_YMAX  ; B = max scaled Y
-00:136A A900            	     1M    lda #<MAND_YMAX  
-00:136C 85FD            	     2M    sta FP_B
-00:136E A902            	     3M    lda #>MAND_YMAX  
-00:1370 85FE            	     4M    sta FP_B+1
-00:1372 205911          	    41:    jsr fp_multiply   ; C = A*B
-                        	    42:    FP_TCA            ; A = C (Y*Ymax)
-00:1375 A5F0            	     1M    lda FP_C
-00:1377 85FB            	     2M    sta FP_A
-00:1379 A5F1            	     3M    lda FP_C+1
-00:137B 85FC            	     4M    sta FP_A+1
-                        	    43:    FP_LDB_IMM_INT  MAND_HEIGHT ; B = height
-00:137D 64FD            	     1M    stz FP_B
-00:137F A918            	     2M    lda #MAND_HEIGHT 
-00:1381 85FE            	     3M    sta FP_B+1
-00:1383 20D610          	    44:    jsr fp_divide     ; C = A/B
-                        	    45:    FP_TCA            ; A = C (scaled Y with zero min)
-00:1386 A5F0            	     1M    lda FP_C
-00:1388 85FB            	     2M    sta FP_A
+00:1385 A5F0            	     1M    lda FP_C
+00:1387 8D4213          	     2M    sta mand_x0    
 00:138A A5F1            	     3M    lda FP_C+1
-00:138C 85FC            	     4M    sta FP_A+1
+00:138C 8D4313          	     4M    sta mand_x0    +1
+00:138F 68              	    37:    pla               ; retrieve Y from stack
+00:1390 48              	    38:    pha               ; put Y back on stack
+00:1391 20A610          	    39:    jsr fp_lda_byte   ; A = Y coordinate
+                        	    40:    FP_LDB_IMM MAND_YMAX  ; B = max scaled Y
+00:1394 A900            	     1M    lda #<MAND_YMAX  
+00:1396 85FD            	     2M    sta FP_B
+00:1398 A902            	     3M    lda #>MAND_YMAX  
+00:139A 85FE            	     4M    sta FP_B+1
+00:139C 207111          	    41:    jsr fp_multiply   ; C = A*B
+                        	    42:    FP_TCA            ; A = C (Y*Ymax)
+00:139F A5F0            	     1M    lda FP_C
+00:13A1 85FB            	     2M    sta FP_A
+00:13A3 A5F1            	     3M    lda FP_C+1
+00:13A5 85FC            	     4M    sta FP_A+1
+                        	    43:    FP_LDB_IMM_INT  MAND_HEIGHT ; B = height
+00:13A7 64FD            	     1M    stz FP_B
+00:13A9 A918            	     2M    lda #MAND_HEIGHT 
+00:13AB 85FE            	     3M    sta FP_B+1
+00:13AD 20EE10          	    44:    jsr fp_divide     ; C = A/B
+                        	    45:    FP_TCA            ; A = C (scaled Y with zero min)
+00:13B0 A5F0            	     1M    lda FP_C
+00:13B2 85FB            	     2M    sta FP_A
+00:13B4 A5F1            	     3M    lda FP_C+1
+00:13B6 85FC            	     4M    sta FP_A+1
                         	    46:    FP_LDB_IMM MAND_YMIN  ; B = min scaled Y
-00:138E A900            	     1M    lda #<MAND_YMIN  
-00:1390 85FD            	     2M    sta FP_B
-00:1392 A9FF            	     3M    lda #>MAND_YMIN  
-00:1394 85FE            	     4M    sta FP_B+1
-00:1396 20C810          	    47:    jsr fp_add        ; C = A+B (scaled Y)
+00:13B8 A900            	     1M    lda #<MAND_YMIN  
+00:13BA 85FD            	     2M    sta FP_B
+00:13BC A9FF            	     3M    lda #>MAND_YMIN  
+00:13BE 85FE            	     4M    sta FP_B+1
+00:13C0 20E010          	    47:    jsr fp_add        ; C = A+B (scaled Y)
                         	    48:    FP_STC mand_y0    ; y0 = C
-00:1399 A5F0            	     1M    lda FP_C
-00:139B 8D1A13          	     2M    sta mand_y0    
-00:139E A5F1            	     3M    lda FP_C+1
-00:13A0 8D1B13          	     4M    sta mand_y0    +1
-00:13A3 9C1C13          	    49:    stz mand_x
-00:13A6 9C1D13          	    50:    stz mand_x+1
-00:13A9 9C1E13          	    51:    stz mand_y
-00:13AC 9C1F13          	    52:    stz mand_y+1
-00:13AF A200            	    53:    ldx #0            ; X = I (init to 0)
+00:13C3 A5F0            	     1M    lda FP_C
+00:13C5 8D4413          	     2M    sta mand_y0    
+00:13C8 A5F1            	     3M    lda FP_C+1
+00:13CA 8D4513          	     4M    sta mand_y0    +1
+00:13CD 9C4613          	    49:    stz mand_x
+00:13D0 9C4713          	    50:    stz mand_x+1
+00:13D3 9C4813          	    51:    stz mand_y
+00:13D6 9C4913          	    52:    stz mand_y+1
+00:13D9 A200            	    53:    ldx #0            ; X = I (init to 0)
                         	    54: .loop:
                         	    55:    FP_LDA mand_x     ; A = X
-00:13B1 AD1C13          	     1M    lda mand_x     
-00:13B4 85FB            	     2M    sta FP_A
-00:13B6 AD1D13          	     3M    lda mand_x     +1
-00:13B9 85FC            	     4M    sta FP_A+1
+00:13DB AD4613          	     1M    lda mand_x     
+00:13DE 85FB            	     2M    sta FP_A
+00:13E0 AD4713          	     3M    lda mand_x     +1
+00:13E3 85FC            	     4M    sta FP_A+1
                         	    56:    FP_LDB mand_x     ; B = X
-00:13BB AD1C13          	     1M    lda mand_x     
-00:13BE 85FD            	     2M    sta FP_B
-00:13C0 AD1D13          	     3M    lda mand_x     +1
-00:13C3 85FE            	     4M    sta FP_B+1
-00:13C5 205911          	    57:    jsr fp_multiply   ; C = X^2
+00:13E5 AD4613          	     1M    lda mand_x     
+00:13E8 85FD            	     2M    sta FP_B
+00:13EA AD4713          	     3M    lda mand_x     +1
+00:13ED 85FE            	     4M    sta FP_B+1
+00:13EF 207111          	    57:    jsr fp_multiply   ; C = X^2
                         	    58:    FP_STC mand_x2
-00:13C8 A5F0            	     1M    lda FP_C
-00:13CA 8D2013          	     2M    sta mand_x2
-00:13CD A5F1            	     3M    lda FP_C+1
-00:13CF 8D2113          	     4M    sta mand_x2+1
+00:13F2 A5F0            	     1M    lda FP_C
+00:13F4 8D4A13          	     2M    sta mand_x2
+00:13F7 A5F1            	     3M    lda FP_C+1
+00:13F9 8D4B13          	     4M    sta mand_x2+1
                         	    59:    FP_LDA mand_y     ; A = Y
-00:13D2 AD1E13          	     1M    lda mand_y     
-00:13D5 85FB            	     2M    sta FP_A
-00:13D7 AD1F13          	     3M    lda mand_y     +1
-00:13DA 85FC            	     4M    sta FP_A+1
+00:13FC AD4813          	     1M    lda mand_y     
+00:13FF 85FB            	     2M    sta FP_A
+00:1401 AD4913          	     3M    lda mand_y     +1
+00:1404 85FC            	     4M    sta FP_A+1
                         	    60:    FP_LDB mand_y     ; B = Y
-00:13DC AD1E13          	     1M    lda mand_y     
-00:13DF 85FD            	     2M    sta FP_B
-00:13E1 AD1F13          	     3M    lda mand_y     +1
-00:13E4 85FE            	     4M    sta FP_B+1
-00:13E6 205911          	    61:    jsr fp_multiply   ; C = Y^2
+00:1406 AD4813          	     1M    lda mand_y     
+00:1409 85FD            	     2M    sta FP_B
+00:140B AD4913          	     3M    lda mand_y     +1
+00:140E 85FE            	     4M    sta FP_B+1
+00:1410 207111          	    61:    jsr fp_multiply   ; C = Y^2
                         	    62:    FP_STC mand_y2
-00:13E9 A5F0            	     1M    lda FP_C
-00:13EB 8D2213          	     2M    sta mand_y2
-00:13EE A5F1            	     3M    lda FP_C+1
-00:13F0 8D2313          	     4M    sta mand_y2+1
+00:1413 A5F0            	     1M    lda FP_C
+00:1415 8D4C13          	     2M    sta mand_y2
+00:1418 A5F1            	     3M    lda FP_C+1
+00:141A 8D4D13          	     4M    sta mand_y2+1
                         	    63:    FP_LDA mand_x2    ; A = X^2
-00:13F3 AD2013          	     1M    lda mand_x2    
-00:13F6 85FB            	     2M    sta FP_A
-00:13F8 AD2113          	     3M    lda mand_x2    +1
-00:13FB 85FC            	     4M    sta FP_A+1
+00:141D AD4A13          	     1M    lda mand_x2    
+00:1420 85FB            	     2M    sta FP_A
+00:1422 AD4B13          	     3M    lda mand_x2    +1
+00:1425 85FC            	     4M    sta FP_A+1
                         	    64:    FP_TCB            ; B = Y^2
-00:13FD A5F0            	     1M    lda FP_C
-00:13FF 85FD            	     2M    sta FP_B
-00:1401 A5F1            	     3M    lda FP_C+1
-00:1403 85FE            	     4M    sta FP_B+1
-00:1405 20C810          	    65:    jsr fp_add        ; C = X^2+Y^2
-00:1408 A5F1            	    66:    lda FP_C+1
-00:140A 38              	    67:    sec
-00:140B E904            	    68:    sbc #4
-00:140D F005            	    69:    beq .check_fraction
-00:140F 3007            	    70:    bmi .do_it
-00:1411 4C8814          	    71:    jmp .dec_i
+00:1427 A5F0            	     1M    lda FP_C
+00:1429 85FD            	     2M    sta FP_B
+00:142B A5F1            	     3M    lda FP_C+1
+00:142D 85FE            	     4M    sta FP_B+1
+00:142F 20E010          	    65:    jsr fp_add        ; C = X^2+Y^2
+00:1432 A5F1            	    66:    lda FP_C+1
+00:1434 38              	    67:    sec
+00:1435 E904            	    68:    sbc #4
+00:1437 F005            	    69:    beq .check_fraction
+00:1439 3007            	    70:    bmi .do_it
+00:143B 4CB214          	    71:    jmp .dec_i
                         	    72: .check_fraction:
-00:1414 A5F0            	    73:    lda FP_C
-00:1416 D070            	    74:    bne .dec_i
+00:143E A5F0            	    73:    lda FP_C
+00:1440 D070            	    74:    bne .dec_i
                         	    75: .do_it:
-00:1418 20BA10          	    76:    jsr fp_subtract   ; C = X^2 - Y^2
+00:1442 20D210          	    76:    jsr fp_subtract   ; C = X^2 - Y^2
                         	    77:    FP_TCA            ; A = C (X^2 - Y^2)
-00:141B A5F0            	     1M    lda FP_C
-00:141D 85FB            	     2M    sta FP_A
-00:141F A5F1            	     3M    lda FP_C+1
-00:1421 85FC            	     4M    sta FP_A+1
+00:1445 A5F0            	     1M    lda FP_C
+00:1447 85FB            	     2M    sta FP_A
+00:1449 A5F1            	     3M    lda FP_C+1
+00:144B 85FC            	     4M    sta FP_A+1
                         	    78:    FP_LDB mand_x0    ; B = X0
-00:1423 AD1813          	     1M    lda mand_x0    
-00:1426 85FD            	     2M    sta FP_B
-00:1428 AD1913          	     3M    lda mand_x0    +1
-00:142B 85FE            	     4M    sta FP_B+1
-00:142D 20C810          	    79:    jsr fp_add        ; C = X^2 - Y^2 + X0
+00:144D AD4213          	     1M    lda mand_x0    
+00:1450 85FD            	     2M    sta FP_B
+00:1452 AD4313          	     3M    lda mand_x0    +1
+00:1455 85FE            	     4M    sta FP_B+1
+00:1457 20E010          	    79:    jsr fp_add        ; C = X^2 - Y^2 + X0
                         	    80:    FP_STC mand_xtemp ; Xtemp = C
-00:1430 A5F0            	     1M    lda FP_C
-00:1432 8D2413          	     2M    sta mand_xtemp 
-00:1435 A5F1            	     3M    lda FP_C+1
-00:1437 8D2513          	     4M    sta mand_xtemp +1
+00:145A A5F0            	     1M    lda FP_C
+00:145C 8D4E13          	     2M    sta mand_xtemp 
+00:145F A5F1            	     3M    lda FP_C+1
+00:1461 8D4F13          	     4M    sta mand_xtemp +1
                         	    81:    FP_LDA mand_x     ; A = X
-00:143A AD1C13          	     1M    lda mand_x     
-00:143D 85FB            	     2M    sta FP_A
-00:143F AD1D13          	     3M    lda mand_x     +1
-00:1442 85FC            	     4M    sta FP_A+1
-00:1444 06FB            	    82:    asl FP_A
-00:1446 26FC            	    83:    rol FP_A+1        ; A = 2*X
+00:1464 AD4613          	     1M    lda mand_x     
+00:1467 85FB            	     2M    sta FP_A
+00:1469 AD4713          	     3M    lda mand_x     +1
+00:146C 85FC            	     4M    sta FP_A+1
+00:146E 06FB            	    82:    asl FP_A
+00:1470 26FC            	    83:    rol FP_A+1        ; A = 2*X
                         	    84:    FP_LDB mand_y     ; B = Y
-00:1448 AD1E13          	     1M    lda mand_y     
-00:144B 85FD            	     2M    sta FP_B
-00:144D AD1F13          	     3M    lda mand_y     +1
-00:1450 85FE            	     4M    sta FP_B+1
-00:1452 205911          	    85:    jsr fp_multiply   ; C = 2*X*Y
+00:1472 AD4813          	     1M    lda mand_y     
+00:1475 85FD            	     2M    sta FP_B
+00:1477 AD4913          	     3M    lda mand_y     +1
+00:147A 85FE            	     4M    sta FP_B+1
+00:147C 207111          	    85:    jsr fp_multiply   ; C = 2*X*Y
                         	    86:    FP_TCA            ; A = C (2*X*Y)
-00:1455 A5F0            	     1M    lda FP_C
-00:1457 85FB            	     2M    sta FP_A
-00:1459 A5F1            	     3M    lda FP_C+1
-00:145B 85FC            	     4M    sta FP_A+1
+00:147F A5F0            	     1M    lda FP_C
+00:1481 85FB            	     2M    sta FP_A
+00:1483 A5F1            	     3M    lda FP_C+1
+00:1485 85FC            	     4M    sta FP_A+1
                         	    87:    FP_LDB mand_y0    ; B = Y0
-00:145D AD1A13          	     1M    lda mand_y0    
-00:1460 85FD            	     2M    sta FP_B
-00:1462 AD1B13          	     3M    lda mand_y0    +1
-00:1465 85FE            	     4M    sta FP_B+1
-00:1467 20C810          	    88:    jsr fp_add        ; C = 2*X*Y + Y0
+00:1487 AD4413          	     1M    lda mand_y0    
+00:148A 85FD            	     2M    sta FP_B
+00:148C AD4513          	     3M    lda mand_y0    +1
+00:148F 85FE            	     4M    sta FP_B+1
+00:1491 20E010          	    88:    jsr fp_add        ; C = 2*X*Y + Y0
                         	    89:    FP_STC mand_y     ; Y = C (2*X*Y + Y0)
-00:146A A5F0            	     1M    lda FP_C
-00:146C 8D1E13          	     2M    sta mand_y     
-00:146F A5F1            	     3M    lda FP_C+1
-00:1471 8D1F13          	     4M    sta mand_y     +1
-00:1474 AD2413          	    90:    lda mand_xtemp
-00:1477 8D1C13          	    91:    sta mand_x
-00:147A AD2513          	    92:    lda mand_xtemp+1
-00:147D 8D1D13          	    93:    sta mand_x+1      ; X = Xtemp
-00:1480 E8              	    94:    inx
-00:1481 E00F            	    95:    cpx #MAND_MAX_IT
-00:1483 F003            	    96:    beq .dec_i
-00:1485 4CB113          	    97:    jmp .loop
+00:1494 A5F0            	     1M    lda FP_C
+00:1496 8D4813          	     2M    sta mand_y     
+00:1499 A5F1            	     3M    lda FP_C+1
+00:149B 8D4913          	     4M    sta mand_y     +1
+00:149E AD4E13          	    90:    lda mand_xtemp
+00:14A1 8D4613          	    91:    sta mand_x
+00:14A4 AD4F13          	    92:    lda mand_xtemp+1
+00:14A7 8D4713          	    93:    sta mand_x+1      ; X = Xtemp
+00:14AA E8              	    94:    inx
+00:14AB E00F            	    95:    cpx #MAND_MAX_IT
+00:14AD F003            	    96:    beq .dec_i
+00:14AF 4CDB13          	    97:    jmp .loop
                         	    98: .dec_i:
-00:1488 CA              	    99:    dex
-00:1489 8A              	   100:    txa
-00:148A 7A              	   101:    ply
-00:148B FA              	   102:    plx
-00:148C 60              	   103:    rts
+00:14B2 CA              	    99:    dex
+00:14B3 8A              	   100:    txa
+00:14B4 7A              	   101:    ply
+00:14B5 FA              	   102:    plx
+00:14B6 60              	   103:    rts
                         	   104: 
 
 Source: ".\Fast\mandelbrot.s"
@@ -864,24 +868,31 @@ Source: ".\Fast\mandelbrot.s"
 
 
 Symbols by name:
-ACIA                             E:FF70
-ACIAData                         E:FF71
-ACIAStatus                       E:FF70
-CP_A                             E:0010
-CP_B                             E:0018
-CP_MH                            E:0001
-CP_ML                            E:0000
-CP_S1                            E:0005
-CP_S2                            E:0006
-CP_S3                            E:0007
+CP_A                             E:FF00
+CP_B                             E:FF01
+CP_MH                            E:FF11
+CP_ML                            E:FF10
+CP_S1                            E:FF15
+CP_S2                            E:FF16
+CP_S3                            E:FF17
+ENDPRINTMSGLOOP                  A:10A5
 FP_A                             E:00FB
 FP_B                             E:00FD
 FP_C                             E:00F0
 FP_R                             E:00F2
-IO_ECHO                          A:102A
-IO_IMM                           A:1039
-IO_INKEY                         A:107C
-IO_KEY                           A:106F
+IO_DATA                          E:FF70
+IO_DDR_CTRL                      E:FF73
+IO_DDR_DATA                      E:FF72
+IO_ECHO                          A:1035
+IO_IMM                           A:1070
+IO_IN                            A:1054
+IO_INIT                          A:102A
+IO_INKEY                         A:104F
+IO_KEY                           E:0082
+IO_OUT                           A:103A
+IO_RD                            E:0001
+IO_STATUS                        E:FF71
+IO_WR                            E:0002
 MAND_HEIGHT                      E:0018
 MAND_MAX_IT                      E:000F
 MAND_WIDTH                       E:0020
@@ -889,45 +900,38 @@ MAND_XMAX                        E:0380
 MAND_XMIN                        E:FD80
 MAND_YMAX                        E:0200
 MAND_YMIN                        E:FF00
-NoKey                            A:108A
-SerialOutWait                    A:102B
-cp_multiply                      A:1245
-cp_square                        A:12E2
-endprintmsgloop                  A:106E
-fp_add                           A:10C8
-fp_divide                        A:10D6
-fp_floor                         A:10AB
-fp_floor_byte                    A:1098
-fp_lda_byte                      A:108E
-fp_ldb_byte                      A:1093
-fp_multiply                      A:1159
-fp_square                        A:11E7
-fp_subtract                      A:10BA
+PRINTMSGLOOP                     A:1094
+PRINTPTR                         E:0080
+cp_multiply                      A:125D
+cp_square                        A:1307
+fp_add                           A:10E0
+fp_divide                        A:10EE
+fp_floor                         A:10C3
+fp_floor_byte                    A:10B0
+fp_lda_byte                      A:10A6
+fp_ldb_byte                      A:10AB
+fp_multiply                      A:1171
+fp_square                        A:11FF
+fp_subtract                      A:10D2
 loopx                            A:1009
 loopy                            A:1007
-mand_get                         A:1326
-mand_x                           A:131C
-mand_x0                          A:1318
-mand_x2                          A:1320
-mand_xtemp                       A:1324
-mand_y                           A:131E
-mand_y0                          A:131A
-mand_y2                          A:1322
-printmsgloop                     A:105D
-printptr                         E:0080
+mand_get                         A:1350
+mand_x                           A:1346
+mand_x0                          A:1342
+mand_x2                          A:134A
+mand_xtemp                       A:134E
+mand_y                           A:1348
+mand_y0                          A:1344
+mand_y2                          A:134C
 
 Symbols by value:
-0000 CP_ML
-0001 CP_MH
-0005 CP_S1
-0006 CP_S2
-0007 CP_S3
+0001 IO_RD
+0002 IO_WR
 000F MAND_MAX_IT
-0010 CP_A
 0018 MAND_HEIGHT
-0018 CP_B
 0020 MAND_WIDTH
-0080 printptr
+0080 PRINTPTR
+0082 IO_KEY
 00F0 FP_C
 00F2 FP_R
 00FB FP_A
@@ -936,35 +940,43 @@ Symbols by value:
 0380 MAND_XMAX
 1007 loopy
 1009 loopx
-102A IO_ECHO
-102B SerialOutWait
-1039 IO_IMM
-105D printmsgloop
-106E endprintmsgloop
-106F IO_KEY
-107C IO_INKEY
-108A NoKey
-108E fp_lda_byte
-1093 fp_ldb_byte
-1098 fp_floor_byte
-10AB fp_floor
-10BA fp_subtract
-10C8 fp_add
-10D6 fp_divide
-1159 fp_multiply
-11E7 fp_square
-1245 cp_multiply
-12E2 cp_square
-1318 mand_x0
-131A mand_y0
-131C mand_x
-131E mand_y
-1320 mand_x2
-1322 mand_y2
-1324 mand_xtemp
-1326 mand_get
+102A IO_INIT
+1035 IO_ECHO
+103A IO_OUT
+104F IO_INKEY
+1054 IO_IN
+1070 IO_IMM
+1094 PRINTMSGLOOP
+10A5 ENDPRINTMSGLOOP
+10A6 fp_lda_byte
+10AB fp_ldb_byte
+10B0 fp_floor_byte
+10C3 fp_floor
+10D2 fp_subtract
+10E0 fp_add
+10EE fp_divide
+1171 fp_multiply
+11FF fp_square
+125D cp_multiply
+1307 cp_square
+1342 mand_x0
+1344 mand_y0
+1346 mand_x
+1348 mand_y
+134A mand_x2
+134C mand_y2
+134E mand_xtemp
+1350 mand_get
 FD80 MAND_XMIN
 FF00 MAND_YMIN
-FF70 ACIA
-FF70 ACIAStatus
-FF71 ACIAData
+FF00 CP_A
+FF01 CP_B
+FF10 CP_ML
+FF11 CP_MH
+FF15 CP_S1
+FF16 CP_S2
+FF17 CP_S3
+FF70 IO_DATA
+FF71 IO_STATUS
+FF72 IO_DDR_DATA
+FF73 IO_DDR_CTRL

@@ -1,7 +1,7 @@
 
 CUPL(WM)        5.0a  Serial# 60008009
 Device          g16v8ms  Library DLIB-h-40-11
-Created         Tue Nov 04 11:06:05 2025
+Created         Sat Apr 25 22:21:35 2026
 Name            fast6502_io 
 Partno          09.00.0.A 
 Revision        00 
@@ -46,4 +46,4 @@ Location        None
 *V0015 C11111111NXHXXXH0H1N
 *V0016 C11111111NXHXXXL0L1N
 *V0017 C11111111NXHXXXH0L1N
-*29A8
+*2998

@@ -1,0 +1,329 @@
+Sections:
+00: "org0001:8000" (8000-8000)
+01: "org0002:f000" (F000-F137)
+02: "org0003:fffa" (FFFA-0)
+
+
+Source: ".\Fast\wozmon_6522.s"
+                        	     1:   .org $8000
+                        	     2:   .org $F000
+                        	     3: 
+                        	     4: KEYPRESS = $82                      ; Last key pressed
+                        	     5: XAML  = $84                         ; Last "opened" location Low
+                        	     6: XAMH  = $85                         ; Last "opened" location High
+                        	     7: STL   = $86                         ; Store address Low
+                        	     8: STH   = $87                         ; Store address High
+                        	     9: L     = $88                         ; Hex value parsing Low
+                        	    10: H     = $89                         ; Hex value parsing High
+                        	    11: YSAV  = $8A                         ; Used to see if hex value is given
+                        	    12: MODE  = $8B                         ; $00=XAM, $7F=STOR, $AE=BLOCK XAM
+                        	    13: 
+                        	    14: IN    = $0200                       ; Input buffer
+                        	    15: 
+                        	    16: IO_DATA      = $FF70
+                        	    17: IO_STATUS    = $FF71
+                        	    18: IO_DDR_DATA  = $FF72
+                        	    19: IO_DDR_CTRL  = $FF73
+                        	    20: IO_RD        = %00000001
+                        	    21: IO_WR        = %00000010
+                        	    22: 
+                        	    23: RESET:
+01:F000 D8              	    24:                 CLD
+01:F001 A2FF            	    25:                 LDX     #$FF
+01:F003 9A              	    26:                 TXS
+                        	    27: 
+01:F004 A9FF            	    28:                 LDA     #$FF                    ;
+01:F006 8D72FF          	    29:                 STA IO_DDR_DATA                 ; UART All output (default)
+01:F009 A903            	    30:                 LDA     #$03                    ;
+01:F00B 8D73FF          	    31:                 STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=
+                        	    32: OS:
+01:F00E A91B            	    33:                 LDA     #$1B                    ; Begin with escape.
+                        	    34: 
+                        	    35: NOTCR:
+01:F010 C908            	    36:                 CMP     #$08                    ; Backspace key?
+01:F012 F013            	    37:                 BEQ     BACKSPACE               ; Yes.
+01:F014 C91B            	    38:                 CMP     #$1B                    ; ESC?
+01:F016 F003            	    39:                 BEQ     ESCAPE                  ; Yes.
+01:F018 C8              	    40:                 INY                             ; Advance text index.
+01:F019 1019            	    41:                 BPL     NEXTCHAR                ; Auto ESC if line longer than 127.
+                        	    42: 
+                        	    43: ESCAPE:
+01:F01B A92F            	    44:                 LDA     #'/'                    ; "/".
+01:F01D 20FCF0          	    45:                 JSR     ECHO                    ; Output it.
+                        	    46: 
+                        	    47: GETLINE:
+01:F020 A90A            	    48:                 LDA     #$0A                    ; Send CR
+01:F022 20FCF0          	    49:                 JSR     ECHO
+                        	    50: 
+01:F025 A001            	    51:                 LDY     #$01                    ; Initialize text index.
+                        	    52: BACKSPACE:
+01:F027 A920            	    53:                 LDA     #' '
+01:F029 20FCF0          	    54:                 JSR     ECHO
+01:F02C A908            	    55:                 LDA     #$08
+01:F02E 20FCF0          	    56:                 JSR     ECHO
+01:F031 88              	    57:                 DEY                             ; Back up text index.
+01:F032 30EC            	    58:                 BMI     GETLINE                 ; Beyond start of line, reinitialize.
+                        	    59: 
+                        	    60: NEXTCHAR:
+01:F034 2016F1          	    61:                 JSR     INPUTKEY                ; Get Keypress
+01:F037 990002          	    62:                 STA     IN,Y                    ; Add to text buffer.
+01:F03A 20FCF0          	    63:                 JSR     ECHO                    ; Display character.
+01:F03D C90A            	    64:                 CMP     #$0A                    ; CR?
+01:F03F D0CF            	    65:                 BNE     NOTCR                   ; No.
+                        	    66: 
+01:F041 A0FF            	    67:                 LDY     #$FF                    ; Reset text index.
+01:F043 A900            	    68:                 LDA     #$00                    ; For XAM mode.
+01:F045 AA              	    69:                 TAX                             ; X=0.
+                        	    70: SETBLOCK:
+01:F046 0A              	    71:                 ASL
+                        	    72: SETSTOR:
+01:F047 0A              	    73:                 ASL                             ; Leaves $7B if setting STOR mode.
+01:F048 858B            	    74:                 STA     MODE                    ; $00 = XAM, $74 = STOR, $B8 = BLOK XAM.
+                        	    75: BLSKIP:
+01:F04A C8              	    76:                 INY                             ; Advance text index.
+                        	    77: NEXTITEM:
+01:F04B B90002          	    78:                 LDA     IN,Y                    ; Get character.
+01:F04E C90A            	    79:                 CMP     #$0A                    ; CR?
+01:F050 F0CE            	    80:                 BEQ     GETLINE                 ; Yes, done this line.
+01:F052 C92E            	    81:                 CMP     #$2E                    ; "."?
+01:F054 90F4            	    82:                 BCC     BLSKIP                  ; Skip delimiter.
+01:F056 F0EE            	    83:                 BEQ     SETBLOCK                ; Set BLOCK XAM mode.
+01:F058 C93A            	    84:                 CMP     #':'                    ; ":"?
+01:F05A F0EB            	    85:                 BEQ     SETSTOR                 ; Yes, set STOR mode.
+01:F05C C952            	    86:                 CMP     #'R'                    ; "R"?
+01:F05E F03B            	    87:                 BEQ     RUNIT                   ; Yes, run user program.
+01:F060 8688            	    88:                 STX     L                       ; $00 -> L.
+01:F062 8689            	    89:                 STX     H                       ;    and H.
+01:F064 848A            	    90:                 STY     YSAV                    ; Save Y for comparison
+                        	    91: 
+                        	    92: NEXTHEX:
+01:F066 B90002          	    93:                 LDA     IN,Y                    ; Get character for hex test.
+01:F069 4930            	    94:                 EOR     #$30                    ; Map digits to $0-9.
+01:F06B C90A            	    95:                 CMP     #$0A                    ; Digit?
+01:F06D 9006            	    96:                 BCC     DIG                     ; Yes.
+01:F06F 6988            	    97:                 ADC     #$88                    ; Map letter "A"-"F" to $FA-FF.
+01:F071 C9FA            	    98:                 CMP     #$FA                    ; Hex letter?
+01:F073 9011            	    99:                 BCC     NOTHEX                  ; No, character not hex.
+                        	   100: DIG:
+01:F075 0A              	   101:                 ASL
+01:F076 0A              	   102:                 ASL                             ; Hex digit to MSD of A.
+01:F077 0A              	   103:                 ASL
+01:F078 0A              	   104:                 ASL
+                        	   105: 
+01:F079 A204            	   106:                 LDX     #$04                    ; Shift count.
+                        	   107: HEXSHIFT:
+01:F07B 0A              	   108:                 ASL                             ; Hex digit left, MSB to carry.
+01:F07C 2688            	   109:                 ROL     L                       ; Rotate into LSD.
+01:F07E 2689            	   110:                 ROL     H                       ; Rotate into MSD's.
+01:F080 CA              	   111:                 DEX                             ; Done 4 shifts?
+01:F081 D0F8            	   112:                 BNE     HEXSHIFT                ; No, loop.
+01:F083 C8              	   113:                 INY                             ; Advance text index.
+01:F084 D0E0            	   114:                 BNE     NEXTHEX                 ; Always taken. Check next character for hex.
+                        	   115: 
+                        	   116: NOTHEX:
+01:F086 C48A            	   117:                 CPY     YSAV                    ; Check if L, H empty (no hex digits).
+01:F088 F091            	   118:                 BEQ     ESCAPE                  ; Yes, generate ESC sequence.
+                        	   119: 
+01:F08A 248B            	   120:                 BIT     MODE                    ; Test MODE byte.
+01:F08C 5016            	   121:                 BVC     NOTSTOR                 ; B6=0 is STOR, 1 is XAM and BLOCK XAM.
+                        	   122: 
+01:F08E A588            	   123:                 LDA     L                       ; LSD's of hex data.
+01:F090 8186            	   124:                 STA     (STL,X)                 ; Store current 'store index'.
+01:F092 E686            	   125:                 INC     STL                     ; Increment store index.
+01:F094 D0B5            	   126:                 BNE     NEXTITEM                ; Get next item (no carry).
+01:F096 E687            	   127:                 INC     STH                     ; Add carry to 'store index' high order.
+01:F098 4C4BF0          	   128: TONEXTITEM:     JMP     NEXTITEM                ; Get next command item.
+                        	   129: 
+                        	   130: RUNIT:
+01:F09B 20A1F0          	   131:                 JSR     RUN                     ; Jump to program so RTS will go back to OS
+01:F09E 4C0EF0          	   132:                 JMP     OS
+                        	   133: RUN:
+01:F0A1 6C8400          	   134:                 JMP     (XAML)                  ; Run at current XAM index.
+                        	   135: 
+                        	   136: NOTSTOR:
+01:F0A4 302B            	   137:                 BMI     XAMNEXT                 ; B7 = 0 for XAM, 1 for BLOCK XAM.
+                        	   138: 
+01:F0A6 A202            	   139:                 LDX     #$02                    ; Byte count.
+01:F0A8 B587            	   140: SETADR:         LDA     L-1,X                   ; Copy hex data to
+01:F0AA 9585            	   141:                 STA     STL-1,X                 ;  'store index'.
+01:F0AC 9583            	   142:                 STA     XAML-1,X                ; And to 'XAM index'.
+01:F0AE CA              	   143:                 DEX                             ; Next of 2 bytes.
+01:F0AF D0F7            	   144:                 BNE     SETADR                  ; Loop unless X = 0.
+                        	   145: 
+                        	   146: NXTPRNT:
+01:F0B1 D014            	   147:                 BNE     PRDATA                  ; NE means no address to print.
+01:F0B3 A90A            	   148:                 LDA     #$0A                    ; CR.
+01:F0B5 20FCF0          	   149:                 JSR     ECHO                    ; Output it.
+01:F0B8 A585            	   150:                 LDA     XAMH                    ; 'Examine index' high-order byte.
+01:F0BA 20E9F0          	   151:                 JSR     PRBYTE                  ; Output it in hex format.
+01:F0BD A584            	   152:                 LDA     XAML                    ; Low-order 'examine index' byte.
+01:F0BF 20E9F0          	   153:                 JSR     PRBYTE                  ; Output it in hex format.
+01:F0C2 A93A            	   154:                 LDA     #':'                    ; ":".
+01:F0C4 20FCF0          	   155:                 JSR     ECHO                    ; Output it.
+                        	   156: 
+                        	   157: PRDATA:
+01:F0C7 A920            	   158:                 LDA     #' '                    ; Blank.
+01:F0C9 20FCF0          	   159:                 JSR     ECHO                    ; Output it.
+01:F0CC A184            	   160:                 LDA     (XAML,X)                ; Get data byte at 'examine index'.
+01:F0CE 20E9F0          	   161:                 JSR     PRBYTE                  ; Output it in hex format.
+01:F0D1 868B            	   162: XAMNEXT:        STX     MODE                    ; 0 -> MODE (XAM mode).
+01:F0D3 A584            	   163:                 LDA     XAML
+01:F0D5 C588            	   164:                 CMP     L                       ; Compare 'examine index' to hex data.
+01:F0D7 A585            	   165:                 LDA     XAMH
+01:F0D9 E589            	   166:                 SBC     H
+01:F0DB B0BB            	   167:                 BCS     TONEXTITEM              ; Not less, so no more data to output.
+                        	   168: 
+01:F0DD E684            	   169:                 INC     XAML
+01:F0DF D002            	   170:                 BNE     MOD8CHK                 ; Increment 'examine index'.
+01:F0E1 E685            	   171:                 INC     XAMH
+                        	   172: 
+                        	   173: MOD8CHK:
+01:F0E3 A584            	   174:                 LDA     XAML                    ; Check low-order 'examine index' byte
+01:F0E5 2907            	   175:                 AND     #$07                    ; For MOD 8 = 0
+01:F0E7 10C8            	   176:                 BPL     NXTPRNT                 ; Always taken.
+                        	   177: 
+                        	   178: PRBYTE:
+01:F0E9 48              	   179:                 PHA                    ; Save A for LSD.
+01:F0EA 4A              	   180:                 LSR
+01:F0EB 4A              	   181:                 LSR
+01:F0EC 4A              	   182:                 LSR                    ; MSD to LSD position.
+01:F0ED 4A              	   183:                 LSR
+01:F0EE 20F2F0          	   184:                 JSR     PRHEX                   ; Output hex digit.
+01:F0F1 68              	   185:                 PLA                    ; Restore A.
+                        	   186: 
+                        	   187: PRHEX:
+01:F0F2 290F            	   188:                 AND     #$0F                    ; Mask LSD for hex print.
+01:F0F4 0930            	   189:                 ORA     #'0'                    ; Add "0".
+01:F0F6 C93A            	   190:                 CMP     #$3A                    ; Digit?
+01:F0F8 9002            	   191:                 BCC     ECHO                    ; Yes, output it.
+01:F0FA 6906            	   192:                 ADC     #$06                    ; Add offset for letter.
+                        	   193: 
+                        	   194: ECHO:
+01:F0FC 2C71FF          	   195:                 BIT     IO_STATUS               ; Wait for output to be ready
+01:F0FF 30FB            	   196:                 BMI     ECHO
+01:F101 8D70FF          	   197:                 STA     IO_DATA                 ; Output Character to UART
+01:F104 48              	   198:                 PHA
+01:F105 A903            	   199:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+01:F107 8D71FF          	   200:                 STA     IO_STATUS
+01:F10A A902            	   201:                 LDA     #IO_WR                  ; Write (active low)
+01:F10C 8D71FF          	   202:                 STA     IO_STATUS
+01:F10F A903            	   203:                 LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
+01:F111 8D71FF          	   204:                 STA     IO_STATUS
+01:F114 68              	   205:                 PLA
+01:F115 60              	   206:                 RTS                             ; Return.
+                        	   207: 
+                        	   208: INPUTKEY:
+01:F116 2C71FF          	   209:                 BIT     IO_STATUS               ; Wait for keypress
+01:F119 70FB            	   210:                 BVS     INPUTKEY
+                        	   211: 
+01:F11B A900            	   212:                 LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
+01:F11D 8D72FF          	   213:                 STA     IO_DDR_DATA
+01:F120 A901            	   214:                 LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
+01:F122 8D71FF          	   215:                 STA     IO_STATUS
+01:F125 AD70FF          	   216:                 LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+01:F128 8582            	   217:                 STA     KEYPRESS                ; SAVE DATA
+01:F12A A903            	   218:                 LDA     #(IO_WR|IO_RD)          ; SET WR AND RD TO HIGH
+01:F12C 8D71FF          	   219:                 STA     IO_STATUS
+01:F12F A9FF            	   220:                 LDA     #$FF                    ; SET ALL PINS ON PORT A TO OUTPUT
+01:F131 8D72FF          	   221:                 STA     IO_DDR_DATA
+01:F134 A582            	   222:                 LDA     KEYPRESS                ; RESTORE KEYPESS
+01:F136 60              	   223:                 RTS
+                        	   224: 
+                        	   225:                 .org    $FFFA                       ; ---VECTORS---
+02:FFFA 00F0            	   226:                 .word   RESET                       ; NMI vector
+02:FFFC 00F0            	   227:                 .word   RESET                       ; RESET vector
+02:FFFE 0000            	   228:                 .word   $0000                       ; IRQ vector
+                        	   229: 
+
+
+Symbols by name:
+BACKSPACE                        A:F027
+BLSKIP                           A:F04A
+DIG                              A:F075
+ECHO                             A:F0FC
+ESCAPE                           A:F01B
+GETLINE                          A:F020
+H                                E:0089
+HEXSHIFT                         A:F07B
+IN                               E:0200
+INPUTKEY                         A:F116
+IO_DATA                          E:FF70
+IO_DDR_CTRL                      E:FF73
+IO_DDR_DATA                      E:FF72
+IO_RD                            E:0001
+IO_STATUS                        E:FF71
+IO_WR                            E:0002
+KEYPRESS                         E:0082
+L                                E:0088
+MOD8CHK                          A:F0E3
+MODE                             E:008B
+NEXTCHAR                         A:F034
+NEXTHEX                          A:F066
+NEXTITEM                         A:F04B
+NOTCR                            A:F010
+NOTHEX                           A:F086
+NOTSTOR                          A:F0A4
+NXTPRNT                          A:F0B1
+OS                               A:F00E
+PRBYTE                           A:F0E9
+PRDATA                           A:F0C7
+PRHEX                            A:F0F2
+RESET                            A:F000
+RUN                              A:F0A1
+RUNIT                            A:F09B
+SETADR                           A:F0A8
+SETBLOCK                         A:F046
+SETSTOR                          A:F047
+STH                              E:0087
+STL                              E:0086
+TONEXTITEM                       A:F098
+XAMH                             E:0085
+XAML                             E:0084
+XAMNEXT                          A:F0D1
+YSAV                             E:008A
+
+Symbols by value:
+0001 IO_RD
+0002 IO_WR
+0082 KEYPRESS
+0084 XAML
+0085 XAMH
+0086 STL
+0087 STH
+0088 L
+0089 H
+008A YSAV
+008B MODE
+0200 IN
+F000 RESET
+F00E OS
+F010 NOTCR
+F01B ESCAPE
+F020 GETLINE
+F027 BACKSPACE
+F034 NEXTCHAR
+F046 SETBLOCK
+F047 SETSTOR
+F04A BLSKIP
+F04B NEXTITEM
+F066 NEXTHEX
+F075 DIG
+F07B HEXSHIFT
+F086 NOTHEX
+F098 TONEXTITEM
+F09B RUNIT
+F0A1 RUN
+F0A4 NOTSTOR
+F0A8 SETADR
+F0B1 NXTPRNT
+F0C7 PRDATA
+F0D1 XAMNEXT
+F0E3 MOD8CHK
+F0E9 PRBYTE
+F0F2 PRHEX
+F0FC ECHO
+F116 INPUTKEY
+FF70 IO_DATA
+FF71 IO_STATUS
+FF72 IO_DDR_DATA
+FF73 IO_DDR_CTRL

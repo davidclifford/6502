@@ -3,16 +3,16 @@ FP_B = $FD
 FP_C = $F0
 FP_R = $F2
 
-CP_A = $10
-CP_B = $18
-CP_ML = $00
-CP_MH = $01
-CP_MD = $02
-CP_DV = $03
-CP_S0 = $04
-CP_S1 = $05
-CP_S2 = $06
-CP_S3 = $07
+CP_A = $FF00
+CP_B = $FF01
+CP_ML = $FF10
+CP_MH = $FF11
+CP_MD = $FF12
+CP_DV = $FF13
+CP_S0 = $FF14
+CP_S1 = $FF15
+CP_S2 = $FF16
+CP_S3 = $FF17
 
 fp_lda_byte:  ;FP_A = A
    sta FP_A+1
