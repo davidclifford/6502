@@ -21,9 +21,9 @@
 ; (first revision of this distribution, 20 Oct 2008, Michael Steil www.pagetable.com)
 ;
 ;
-; Name                 Release   MS Version    ROM   9digit  INPUTBUFFER   extensions
+; Name                 Release   MS Version    ROM   9digit  INPUTBUFFER   extensions   
 ;---------------------------------------------------------------------------------------------------
-; OSI BASIC             1977     1.0 REV 3.2    Y      N          ZP            -
+; OSI BASIC             1977     1.0 REV 3.2    Y      N          ZP            -        
 ;
 ; Credits:
 ; * main work by Michael Steil
@@ -35,7 +35,7 @@
 
 .debuginfo +
 
-.setcpu "65C02"
+.setcpu "6502"
 .macpack longbranch
 
 ; zero page
@@ -324,7 +324,7 @@ MATHTBL:
         .word   EQUOP-1
         .byte   $64
         .word   RELOPS-1
-
+		
 TOKEN_NAME_TABLE:
 		.byte "EN", $80+'D'
 		.byte "FO", $80+'R'
@@ -395,7 +395,7 @@ TOKEN_NAME_TABLE:
 		.byte "RIGHT", $80+'$'
 		.byte "MID", $80+'$'
 		.byte   0
-
+		
 ERROR_MESSAGES:
 ERR_NOFOR := <(*-ERROR_MESSAGES)
         .byte "NF"
@@ -431,7 +431,7 @@ ERR_CANTCONT := <(*-ERROR_MESSAGES)
         .byte "CN"
 ERR_UNDEFFN := <(*-ERROR_MESSAGES)
         .byte "UF"
-
+		
 ; global messages: "error", "in", "ready", "break"
 QT_ERROR:
         .byte   " ERROR"
@@ -445,7 +445,7 @@ QT_OK:
 QT_BREAK:
 		.byte CR,LF,"BREAK"
         .byte   0
-
+		
 ; generic stack and memory management code
 ; this code is identical across all versions of
 ; BASIC
@@ -803,7 +803,6 @@ L2453:
         jmp     L29B9
 GETLN:
         jsr     MONRDKEY
-		bcc		GETLN
         nop
         nop
         nop
@@ -5768,22 +5767,20 @@ QT_BYTES_FREE:
         .byte   CR,LF,0
 
 ; STARTUP AND SERIAL I/O ROUTINES ===========================================================
-; BY D. Clifford 2026 =========================================================================
-IO_DATA      = $FF70
-IO_STATUS    = $FF71
-IO_DDR_DATA  = $FF72
-IO_DDR_CTRL  = $FF73
-IO_RD        = %00000001
-IO_WR        = %00000010
+; BY G. SEARLE 2013 =========================================================================
+ACIA := $A000
+ACIAControl := ACIA+0
+ACIAStatus := ACIA+0
+ACIAData := ACIA+1
 
+.segment "IOHANDLER"
+.org $FF00
 Reset:
 	LDX     #STACK_TOP
 	TXS
 
-	LDA     #$FF                    ;
-	STA IO_DDR_DATA                 ; UART All output (default)
-	LDA     #$03                    ;
-	STA IO_DDR_CTRL                 ; UART Ctrl pins [OI....RW] B1=Read B0=Write as output, UART Status B7=out B6=input as input
+	LDA 	#$95		; Set ACIA baud rate, word size and Rx interrupt (to control RTS)
+	STA	ACIAControl
 
 ; Display startup message
 	LDY #0
@@ -5798,7 +5795,7 @@ ShowStartMsg:
 WaitForKeypress:
 	JSR	MONRDKEY
 	BCC	WaitForKeypress
-
+	
 	AND	#$DF			; Make upper case
 	CMP	#'W'			; compare with [W]arm start
 	BEQ	WarmStart
@@ -5812,27 +5809,22 @@ WarmStart:
 	JMP	RESTART		; BASIC warm start
 
 MONCOUT:
-	BIT     IO_STATUS               ; Wait for output to be ready
-	BMI     MONCOUT
-	STA     IO_DATA                 ; Output Character to UART
 	PHA
-	LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
-	STA     IO_STATUS
-	LDA     #IO_WR                  ; Write (active low)
-	STA     IO_STATUS
-	LDA     #(IO_WR|IO_RD)          ; Set WR and RD to High
-	STA     IO_STATUS
+SerialOutWait:
+	LDA	ACIAStatus
+	AND	#2
+	CMP	#2
+	BNE	SerialOutWait
 	PLA
-	RTS                             ; Return.
+	STA	ACIAData
+	RTS
 
 MONRDKEY:
-	BIT     IO_STATUS               ; Wait for keypress
-	BVS     NoDataIn
-	LDA     #$00                    ; SET ALL PINS ON PORT A TO INPUT
-	STA     IO_DDR_DATA
-	LDA     #IO_RD                  ; READ PIN FOR UART (ACTIVE LOW)
-	STA     IO_STATUS
-	LDA     IO_DATA                 ; READ DATA (KEYPRESS)
+	LDA	ACIAStatus
+	AND	#1
+	CMP	#1
+	BNE	NoDataIn
+	LDA	ACIAData
 	SEC		; Carry set if key available
 	RTS
 NoDataIn:
@@ -5855,13 +5847,13 @@ StartupMessage:
 
 LOAD:
 	RTS
-
+	
 SAVE:
 	RTS
-
+	
 .segment "VECTS"
 .org $FFFA
-	.word	Reset		; NMI
-	.word	Reset		; RESET
-	.word	Reset		; IRQ
+	.word	Reset		; NMI 
+	.word	Reset		; RESET 
+	.word	Reset		; IRQ 
 
